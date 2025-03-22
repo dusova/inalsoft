@@ -1,0 +1,3750 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>inalsoft - Görev Takip Sistemi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-database-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-auth-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-storage-compat.min.js"></script>
+    
+    <style>
+        :root {
+            --bs-primary: #0d6efd;
+            --bs-success: #28a745;
+            --bs-warning: #ffc107;
+            --bs-danger: #dc3545;
+            --bs-purple: #6f42c1;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        
+        .login-container {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+        }
+        
+        .login-form {
+            max-width: 400px;
+            width: 100%;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            background-color: #fff;
+        }
+        
+        .sidebar {
+            height: calc(100vh - 56px);
+            position: fixed;
+            top: 56px;
+            left: 0;
+            width: 250px;
+            z-index: 100;
+            padding: 0;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            overflow-y: auto;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                top: 0;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        .navbar-brand {
+            padding-left: 10px;
+        }
+        
+        .nav-link {
+            color: #343a40;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            margin: 0.15rem 0;
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(13, 110, 253, 0.1);
+        }
+        
+        .nav-link.active {
+            background-color: rgba(13, 110, 253, 0.2);
+            color: var(--bs-primary);
+            font-weight: 500;
+        }
+        
+        .table th {
+            font-weight: 500;
+            color: #6c757d;
+        }
+        
+        .status-badge {
+            padding: 0.35em 0.65em;
+            border-radius: 20px;
+            white-space: nowrap;
+            display: inline-block;
+            text-align: center;
+            min-width: 110px;
+        }
+        
+        .status-tamamlandi {
+            background-color: var(--bs-success);
+            color: white;
+        }
+        
+        .status-yapiliyor {
+            background-color: var(--bs-purple);
+            color: white;
+        }
+        
+        .status-uzerinde-dusuruluyor {
+            background-color: var(--bs-warning);
+            color: #343a40;
+        }
+        
+        .task-card {
+            border-left: 4px solid #dee2e6;
+            transition: all 0.2s ease;
+        }
+        
+        .task-card:hover {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .task-card.border-success {
+            border-left-color: var(--bs-success);
+        }
+        
+        .task-card.border-primary {
+            border-left-color: var(--bs-primary);
+        }
+        
+        .task-card.border-warning {
+            border-left-color: var(--bs-warning);
+        }
+        
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 16px;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .avatar-sm {
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+        }
+        
+        .avatar-group {
+            display: flex;
+        }
+        
+        .avatar-group .avatar {
+            margin-left: -8px;
+            border: 2px solid #fff;
+        }
+        
+        .avatar-group .avatar:first-child {
+            margin-left: 0;
+        }
+        
+        .activity-log {
+            height: 250px;
+            overflow-y: auto;
+        }
+        
+        .online-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #28a745;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        
+        .nav-item-icon {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--bs-primary);
+        }
+        
+        .section-icon {
+            margin-right: 10px;
+            color: #6c757d;
+        }
+        
+        .editable-title {
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        
+        .editable-title:hover {
+            background-color: rgba(0,0,0,0.05);
+        }
+        
+        .dashboard-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        .progress-sm {
+            height: 8px;
+        }
+        
+        .project-card {
+            transition: all 0.2s ease;
+        }
+        
+        .project-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+        }
+        
+        .filter-dropdown {
+            min-width: 250px;
+        }
+        
+        .content-page {
+            display: none;
+        }
+        
+        .content-page.active {
+            display: block;
+        }
+        
+        .page-transition {
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .calendar-day {
+            height: 100px;
+            overflow-y: auto;
+        }
+        
+        .calendar-event {
+            padding: 2px 5px;
+            margin-bottom: 2px;
+            border-radius: 3px;
+            font-size: 11px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .stats-card {
+            border-left: 4px solid transparent;
+        }
+        
+        .avatar-selector {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .avatar-option {
+            width: 48px;
+            height: 48px;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid transparent;
+        }
+        
+        .avatar-option:hover, .avatar-option.selected {
+            border-color: var(--bs-primary);
+        }
+        
+        .avatar-upload {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+            cursor: pointer;
+        }
+        
+        .avatar-upload input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .avatar-upload-icon {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background-color: var(--bs-primary);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="loginScreen" class="login-container">
+        <div class="login-form">
+            <div class="text-center mb-4">
+                <h2 class="text-primary">inalsoft</h2>
+                <p class="text-muted">Görev Takip Sistemine Hoş Geldiniz</p>
+            </div>
+            
+            <div class="mb-3">
+                <label for="username" class="form-label">Kullanıcı Adı</label>
+                <input type="text" class="form-control" id="username" placeholder="Kullanıcı adınızı girin">
+            </div>
+            
+            <div class="mb-3">
+                <label for="password" class="form-label">Şifre</label>
+                <input type="password" class="form-control" id="password" placeholder="Şifrenizi girin">
+            </div>
+            
+            <div class="d-grid gap-2">
+                <button id="loginButton" class="btn btn-primary">Giriş Yap</button>
+            </div>
+            
+            <div id="loginError" class="text-danger mt-3 text-center"></div>
+        </div>
+    </div>
+
+    <div id="appContainer" style="display: none;">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">inalsoft</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link active text-white" href="#" data-page="tasks">Görev Takip</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="#" data-page="calendar">Takvim</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="#" data-page="reports">Raporlar</a>
+                        </li>
+                    </ul>
+                    <div class="d-flex align-items-center">
+                        <span id="onlineCount" class="text-white me-3">
+                            <span class="online-indicator"></span> Çevrimiçi: 1
+                        </span>
+                        <div class="dropdown">
+                            <a class="nav-link dropdown-toggle text-white d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                <div id="userAvatar" class="avatar me-2"></div>
+                                <span id="currentUserName">Kullanıcı</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#" id="profile" data-page="profile"><i class="bi bi-person"></i> Profil</a></li>
+                                <li><a class="dropdown-item" href="#" id="settings" data-page="settings"><i class="bi bi-gear"></i> Ayarlar</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> Çıkış Yap</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-fluid" style="margin-top: 56px;">
+            <div class="row">
+                <nav class="col-md-3 col-lg-2 d-md-block bg-white sidebar">
+                    <div class="position-sticky pt-3">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link active" href="#" data-page="dashboard">
+                                    <i class="bi bi-house-door nav-item-icon"></i>
+                                    Ana Sayfa
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-page="tasks">
+                                    <i class="bi bi-list-check nav-item-icon"></i>
+                                    Görevler
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-page="calendar">
+                                    <i class="bi bi-calendar-event nav-item-icon"></i>
+                                    Takvim
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-page="team">
+                                    <i class="bi bi-people nav-item-icon"></i>
+                                    Takım
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-page="reports">
+                                    <i class="bi bi-graph-up nav-item-icon"></i>
+                                    Raporlar
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-page="settings">
+                                    <i class="bi bi-gear nav-item-icon"></i>
+                                    Ayarlar
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                            <span>Projeler</span>
+                            <a class="link-secondary" href="#" id="addProjectBtn" aria-label="Yeni proje ekle">
+                                <i class="bi bi-plus-circle"></i>
+                            </a>
+                        </h6>
+                        <ul class="nav flex-column mb-2" id="projectsMenu">
+                        </ul>
+                    </div>
+                </nav>
+
+                <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                    <div id="dashboard-page" class="content-page active page-transition">
+                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h1 class="h2">inalsoft - Dashboard</h1>
+                            <div class="btn-toolbar mb-2 mb-md-0">
+                                <div class="btn-group me-2">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-share"></i> Paylaş
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-download"></i> İndir
+                                    </button>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                    <i class="bi bi-calendar3"></i> Bu Hafta
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#">Bu Hafta</a></li>
+                                    <li><a class="dropdown-item" href="#">Bu Ay</a></li>
+                                    <li><a class="dropdown-item" href="#">Son 3 Ay</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-xl-3 col-md-6 mb-3">
+                                <div class="card stats-card h-100 border-0 shadow-sm" style="border-left-color: var(--bs-primary);">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="text-muted mb-1">Toplam Proje</h6>
+                                                <h3 class="mb-0" id="totalProjectsCount">0</h3>
+                                            </div>
+                                            <div class="bg-light rounded p-3">
+                                                <i class="bi bi-folder text-primary fs-3"></i>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <span class="text-success small">
+                                                <i class="bi bi-arrow-up"></i> 12%
+                                            </span>
+                                            <span class="text-muted small ms-1">geçen aya göre</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-xl-3 col-md-6 mb-3">
+                                <div class="card stats-card h-100 border-0 shadow-sm" style="border-left-color: var(--bs-success);">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="text-muted mb-1">Tamamlanan Görevler</h6>
+                                                <h3 class="mb-0" id="completedTasksCount">0</h3>
+                                            </div>
+                                            <div class="bg-light rounded p-3">
+                                                <i class="bi bi-check-circle text-success fs-3"></i>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <span class="text-success small">
+                                                <i class="bi bi-arrow-up"></i> 8%
+                                            </span>
+                                            <span class="text-muted small ms-1">geçen haftaya göre</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-xl-3 col-md-6 mb-3">
+                                <div class="card stats-card h-100 border-0 shadow-sm" style="border-left-color: var(--bs-warning);">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="text-muted mb-1">Bekleyen Görevler</h6>
+                                                <h3 class="mb-0" id="pendingTasksCount">0</h3>
+                                            </div>
+                                            <div class="bg-light rounded p-3">
+                                                <i class="bi bi-clock-history text-warning fs-3"></i>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <span class="text-danger small">
+                                                <i class="bi bi-arrow-up"></i> 5%
+                                            </span>
+                                            <span class="text-muted small ms-1">geçen haftaya göre</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-xl-3 col-md-6 mb-3">
+                                <div class="card stats-card h-100 border-0 shadow-sm" style="border-left-color: var(--bs-purple);">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="text-muted mb-1">Takım Üyeleri</h6>
+                                                <h3 class="mb-0" id="teamMembersCount">0</h3>
+                                            </div>
+                                            <div class="bg-light rounded p-3">
+                                                <i class="bi bi-people text-purple fs-3"></i>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <span class="text-success small">
+                                                <i class="bi bi-arrow-up"></i> 2
+                                            </span>
+                                            <span class="text-muted small ms-1">yeni üye bu ay</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-lg-8 mb-3">
+                                <div class="card shadow-sm">
+                                    <div class="card-header bg-white">
+                                        <h5 class="card-title mb-0">Aktif Projeler</h5>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Proje</th>
+                                                        <th>İlerleme</th>
+                                                        <th>Sorumlu</th>
+                                                        <th>Durum</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="activeProjectsList">
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-lg-4 mb-3">
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-header bg-white">
+                                        <h5 class="card-title mb-0">Yaklaşan Görevler</h5>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <ul class="list-group list-group-flush" id="upcomingTasksList">
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-6 mb-3">
+                                <div class="card shadow-sm">
+                                    <div class="card-header bg-white">
+                                        <h5 class="card-title mb-0">Son Tamamlanan Görevler</h5>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <ul class="list-group list-group-flush" id="recentlyCompletedList">
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-lg-6 mb-3">
+                                <div class="card shadow-sm">
+                                    <div class="card-header bg-white">
+                                        <h5 class="card-title mb-0">Takım Aktivitesi</h5>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div id="teamActivityList" class="list-group list-group-flush">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tasks-page" class="content-page page-transition">
+                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h1 class="h2">Görev Takip</h1>
+                            <div class="btn-toolbar mb-2 mb-md-0">
+                                <div class="btn-group me-2">
+                                    <button type="button" id="addTaskBtn" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-plus-lg"></i> Yeni Görev
+                                    </button>
+                                    <button type="button" id="saveBtn" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-save"></i> Kaydet
+                                    </button>
+                                </div>
+                                <div class="dropdown">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                        <i class="bi bi-filter"></i> Filtrele
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-end filter-dropdown p-3">
+                                        <h6 class="dropdown-header px-0">Durum</h6>
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input filter-status" type="checkbox" value="tamamlandi" id="filterCompleted" checked>
+                                                <label class="form-check-label" for="filterCompleted">
+                                                    Tamamlandı
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input filter-status" type="checkbox" value="yapiliyor" id="filterInProgress" checked>
+                                                <label class="form-check-label" for="filterInProgress">
+                                                    Yapılıyor
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input filter-status" type="checkbox" value="uzerinde-dusuruluyor" id="filterPlanning" checked>
+                                                <label class="form-check-label" for="filterPlanning">
+                                                    Üzerinde Düşünülüyor
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <h6 class="dropdown-header px-0">Sorumlu Kişi</h6>
+                                        <div id="filterPersonsContainer" class="mb-3">
+                                        </div>
+                                        
+                                        <div class="d-grid gap-2">
+                                            <button class="btn btn-sm btn-primary" id="applyFiltersBtn">Uygula</button>
+                                            <button class="btn btn-sm btn-outline-secondary" id="resetFiltersBtn">Sıfırla</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="section-header">
+                                    <i class="bi bi-arrow-right-circle section-icon"></i>
+                                    <h5 class="mb-0 editable-title" data-section="initial">Başlangıçta yapılacaklar</h5>
+                                </div>
+                                
+                                <div class="card">
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col" width="40">
+                                                            <input class="form-check-input" type="checkbox" id="selectAllInitial">
+                                                        </th>
+                                                        <th scope="col">Görev</th>
+                                                        <th scope="col" width="100">Kişiler</th>
+                                                        <th scope="col" width="160">Durum</th>
+                                                        <th scope="col" width="140">Başlama Tarihi</th>
+                                                        <th scope="col" width="140">Bitiş Tarihi</th>
+                                                        <th scope="col" width="100">İşlemler</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="initialTasksContainer">
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div class="d-grid">
+                                            <button class="btn btn-light add-task-row text-start border-top" data-section="initial">
+                                                <i class="bi bi-plus-circle"></i> Yeni görev ekle
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="section-header">
+                                    <i class="bi bi-arrow-right-circle section-icon"></i>
+                                    <h5 class="mb-0 editable-title" data-section="later">Başlangıçtan sonra yapılacaklar</h5>
+                                </div>
+                                
+                                <div class="card">
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col" width="40">
+                                                            <input class="form-check-input" type="checkbox" id="selectAllLater">
+                                                        </th>
+                                                        <th scope="col">Görev</th>
+                                                        <th scope="col" width="100">Kişiler</th>
+                                                        <th scope="col" width="160">Durum</th>
+                                                        <th scope="col" width="140">Başlama Tarihi</th>
+                                                        <th scope="col" width="140">Bitiş Tarihi</th>
+                                                        <th scope="col" width="100">İşlemler</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="laterTasksContainer">
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div class="d-grid">
+                                            <button class="btn btn-light add-task-row text-start border-top" data-section="later">
+                                                <i class="bi bi-plus-circle"></i> Yeni görev ekle
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header bg-white">
+                                        <h5 class="card-title mb-0">
+                                            <i class="bi bi-clock-history me-2"></i>
+                                            Aktivite Günlüğü
+                                        </h5>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div id="logContainer" class="activity-log list-group list-group-flush">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="calendar-page" class="content-page page-transition">
+                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h1 class="h2">Takvim</h1>
+                            <div class="btn-toolbar mb-2 mb-md-0">
+                                <div class="btn-group me-2">
+                                    <button type="button" class="btn btn-sm btn-primary" id="addEventBtn">
+                                        <i class="bi bi-plus-lg"></i> Etkinlik Ekle
+                                    </button>
+                                </div>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="prevMonthBtn">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="nextMonthBtn">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-white">
+                                <h5 class="card-title mb-0" id="calendarTitle">Mart 2025</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-center">Pazartesi</th>
+                                                <th class="text-center">Salı</th>
+                                                <th class="text-center">Çarşamba</th>
+                                                <th class="text-center">Perşembe</th>
+                                                <th class="text-center">Cuma</th>
+                                                <th class="text-center">Cumartesi</th>
+                                                <th class="text-center">Pazar</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="calendarBody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-white">
+                                <h5 class="card-title mb-0">Yaklaşan Etkinlikler</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <ul class="list-group list-group-flush" id="upcomingEventsList">
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="team-page" class="content-page page-transition">
+                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h1 class="h2">Takım</h1>
+                            <div class="btn-toolbar mb-2 mb-md-0">
+                                <button type="button" class="btn btn-sm btn-primary" id="addMemberBtn">
+                                    <i class="bi bi-person-plus"></i> Üye Ekle
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row" id="teamMembersContainer">
+                        </div>
+                    </div>
+
+                    <div id="reports-page" class="content-page page-transition">
+                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h1 class="h2">Raporlar</h1>
+                            <div class="btn-toolbar mb-2 mb-md-0">
+                                <div class="btn-group me-2">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-download"></i> İndir
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-share"></i> Paylaş
+                                    </button>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                    <i class="bi bi-calendar3"></i> Bu Hafta
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#">Bu Hafta</a></li>
+                                    <li><a class="dropdown-item" href="#">Bu Ay</a></li>
+                                    <li><a class="dropdown-item" href="#">Son 3 Ay</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-header bg-white">
+                                        <h5 class="card-title mb-0">Görev Durumu Dağılımı</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-around mb-4">
+                                            <div class="text-center">
+                                                <div class="display-5 text-success" id="completedPercentage">0%</div>
+                                                <div class="text-muted">Tamamlandı</div>
+                                            </div>
+                                            <div class="text-center">
+                                                <div class="display-5 text-purple" id="inProgressPercentage">0%</div>
+                                                <div class="text-muted">Yapılıyor</div>
+                                            </div>
+                                            <div class="text-center">
+                                                <div class="display-5 text-warning" id="planningPercentage">0%</div>
+                                                <div class="text-muted">Planlanıyor</div>
+                                            </div>
+                                        </div>
+                                        <div class="progress mb-2" style="height: 25px;">
+                                            <div class="progress-bar bg-success" id="progressCompleted" style="width: 30%;">30%</div>
+                                            <div class="progress-bar bg-purple" id="progressInProgress" style="width: 40%;">40%</div>
+                                            <div class="progress-bar bg-warning" id="progressPlanning" style="width: 30%;">30%</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-header bg-white">
+                                        <h5 class="card-title mb-0">Kişi Başı Görev Dağılımı</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-group list-group-flush" id="taskDistributionList">
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <div class="card shadow-sm">
+                                    <div class="card-header bg-white">
+                                        <h5 class="card-title mb-0">Proje İlerleme Raporu</h5>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Proje</th>
+                                                        <th>Toplam Görev</th>
+                                                        <th>Tamamlanan</th>
+                                                        <th>İlerleme</th>
+                                                        <th>Durum</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="projectProgressList">
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="profile-page" class="content-page page-transition">
+                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h1 class="h2">Profil</h1>
+                            <div class="btn-toolbar mb-2 mb-md-0">
+                                <button type="button" class="btn btn-sm btn-primary" id="saveProfileBtn">
+                                    <i class="bi bi-save"></i> Kaydet
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-4">
+                                <div class="card shadow-sm">
+                                    <div class="card-body text-center">
+                                        <div class="avatar-upload mb-3">
+                                            <div id="profileAvatar" class="avatar mx-auto" style="width: 100px; height: 100px; font-size: 36px;"></div>
+                                            <div class="avatar-upload-icon">
+                                                <i class="bi bi-camera"></i>
+                                            </div>
+                                            <input type="file" id="avatarUpload" accept="image/*">
+                                        </div>
+                                        <h5 id="profileName">Kullanıcı Adı</h5>
+                                        <p class="text-muted" id="profileRole">Rol</p>
+                                        
+                                        <div class="d-flex justify-content-center mt-3 mb-2">
+                                            <div class="px-3 text-center border-end">
+                                                <h6 id="profileTasksCount">0</h6>
+                                                <small class="text-muted">Görevler</small>
+                                            </div>
+                                            <div class="px-3 text-center border-end">
+                                                <h6 id="profileCompletedCount">0</h6>
+                                                <small class="text-muted">Tamamlanan</small>
+                                            </div>
+                                            <div class="px-3 text-center">
+                                                <h6 id="profileProjectsCount">0</h6>
+                                                <small class="text-muted">Projeler</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card shadow-sm mt-3">
+                                    <div class="card-header bg-white">
+                                        <h5 class="card-title mb-0">Hazır Avatarlar</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="avatar-selector" id="avatarSelector">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-8">
+                                <div class="card shadow-sm mb-4">
+                                    <div class="card-header bg-white">
+                                        <h5 class="card-title mb-0">Profil Bilgileri</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="profileFullName" class="form-label">Ad Soyad</label>
+                                            <input type="text" class="form-control" id="profileFullName">
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="profileUsername" class="form-label">Kullanıcı Adı</label>
+                                                <input type="text" class="form-control" id="profileUsername" disabled>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="profileInitials" class="form-label">Baş Harfler</label>
+                                                <input type="text" class="form-control" id="profileInitials" maxlength="2">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="profileEmail" class="form-label">E-posta</label>
+                                            <input type="email" class="form-control" id="profileEmail">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="profileBio" class="form-label">Hakkında</label>
+                                            <textarea class="form-control" id="profileBio" rows="3"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card shadow-sm">
+                                    <div class="card-header bg-white">
+                                        <h5 class="card-title mb-0">Şifre Değiştir</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="currentPassword" class="form-label">Mevcut Şifre</label>
+                                            <input type="password" class="form-control" id="currentPassword">
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="newPassword" class="form-label">Yeni Şifre</label>
+                                                <input type="password" class="form-control" id="newPassword">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="confirmPassword" class="form-label">Şifre Tekrar</label>
+                                                <input type="password" class="form-control" id="confirmPassword">
+                                            </div>
+                                        </div>
+                                        <div class="d-grid gap-2">
+                                            <button class="btn btn-primary" id="changePasswordBtn">Şifre Değiştir</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="settings-page" class="content-page page-transition">
+                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h1 class="h2">Ayarlar</h1>
+                            <div class="btn-toolbar mb-2 mb-md-0">
+                                <button type="button" class="btn btn-sm btn-primary" id="saveSettingsBtn">
+                                    <i class="bi bi-save"></i> Kaydet
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="card shadow-sm">
+                                    <div class="card-header bg-white">
+                                        <h5 class="card-title mb-0">Genel Ayarlar</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="appTitle" class="form-label">Uygulama Başlığı</label>
+                                            <input type="text" class="form-control" id="appTitle" value="inalsoft">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="defaultLanguage" class="form-label">Varsayılan Dil</label>
+                                            <select class="form-select" id="defaultLanguage">
+                                                <option value="tr" selected>Türkçe</option>
+                                                <option value="en">İngilizce</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="dateFormat" class="form-label">Tarih Formatı</label>
+                                            <select class="form-select" id="dateFormat">
+                                                <option value="dd/MM/yyyy" selected>GG/AA/YYYY</option>
+                                                <option value="MM/dd/yyyy">AA/GG/YYYY</option>
+                                                <option value="yyyy-MM-dd">YYYY-AA-GG</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="darkModeSwitch">
+                                            <label class="form-check-label" for="darkModeSwitch">Karanlık Mod</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-4">
+                                <div class="card shadow-sm">
+                                    <div class="card-header bg-white">
+                                        <h5 class="card-title mb-0">Bildirim Ayarları</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                                            <label class="form-check-label" for="emailNotifications">E-posta Bildirimleri</label>
+                                        </div>
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="taskAssignedNotif" checked>
+                                            <label class="form-check-label" for="taskAssignedNotif">Görev Atandığında Bildirim</label>
+                                        </div>
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="taskCompletedNotif" checked>
+                                            <label class="form-check-label" for="taskCompletedNotif">Görev Tamamlandığında Bildirim</label>
+                                        </div>
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="deadlineNotif" checked>
+                                            <label class="form-check-label" for="deadlineNotif">Son Tarih Yaklaştığında Bildirim</label>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="notificationFrequency" class="form-label">Bildirim Sıklığı</label>
+                                            <select class="form-select" id="notificationFrequency">
+                                                <option value="immediate" selected>Anında</option>
+                                                <option value="hourly">Saatlik Özet</option>
+                                                <option value="daily">Günlük Özet</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="card shadow-sm">
+                                    <div class="card-header bg-white">
+                                        <h5 class="card-title mb-0">Veri Ayarları</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="alert alert-warning">
+                                            <i class="bi bi-exclamation-triangle me-2"></i>
+                                            Dikkat! Veri aktarımı veya silme işlemleri geri alınamaz.
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <div class="d-grid gap-2">
+                                                    <button class="btn btn-outline-primary" id="exportDataBtn">
+                                                        <i class="bi bi-download me-2"></i>Verileri Dışa Aktar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <div class="d-grid gap-2">
+                                                    <button class="btn btn-outline-danger" id="clearDataBtn">
+                                                        <i class="bi bi-trash me-2"></i>Tüm Verileri Temizle
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="taskModalLabel">Yeni Görev Ekle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="modalTaskName" class="form-label">Görev Adı</label>
+                        <input type="text" class="form-control" id="modalTaskName" placeholder="Görev adını girin">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modalTaskPersons" class="form-label">Sorumlu Kişiler</label>
+                        <div class="input-group">
+                            <select class="form-select" id="modalTaskPersons" multiple>
+                            </select>
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Seç</button>
+                            <ul class="dropdown-menu dropdown-menu-end" id="personsDropdown">
+                            </ul>
+                        </div>
+                        <div id="selectedPersons" class="d-flex mt-2">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modalTaskProject" class="form-label">Proje</label>
+                        <select id="modalTaskProject" class="form-select">
+                            <option value="">Proje seçin</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modalTaskStatus" class="form-label">Durum</label>
+                        <select id="modalTaskStatus" class="form-select">
+                            <option value="tamamlandi">Tamamlandı</option>
+                            <option value="yapiliyor">Yapılıyor</option>
+                            <option value="uzerinde-dusuruluyor" selected>Üzerinde Düşünülüyor</option>
+                        </select>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="modalTaskStartDate" class="form-label">Başlama Tarihi</label>
+                            <input type="date" class="form-control" id="modalTaskStartDate">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="modalTaskEndDate" class="form-label">Tahmini Bitiş Tarihi</label>
+                            <input type="date" class="form-control" id="modalTaskEndDate">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modalTaskDescription" class="form-label">Açıklama</label>
+                        <textarea class="form-control" id="modalTaskDescription" rows="3"></textarea>
+                    </div>
+                    
+                    <input type="hidden" id="modalTaskId" value="">
+                    <input type="hidden" id="modalTaskSection" value="">
+                    <input type="hidden" id="modalTaskMode" value="add">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-primary" id="saveTaskBtn">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="sectionTitleModal" tabindex="-1" aria-labelledby="sectionTitleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="sectionTitleModalLabel">Bölüm Başlığını Düzenle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="sectionTitleInput" class="form-label">Başlık</label>
+                        <input type="text" class="form-control" id="sectionTitleInput">
+                    </div>
+                    <input type="hidden" id="sectionId" value="">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-primary" id="saveSectionTitleBtn">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="projectModal" tabindex="-1" aria-labelledby="projectModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="projectModalLabel">Yeni Proje Ekle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="projectName" class="form-label">Proje Adı</label>
+                        <input type="text" class="form-control" id="projectName" placeholder="Proje adını girin">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="projectDescription" class="form-label">Açıklama</label>
+                        <textarea class="form-control" id="projectDescription" rows="3" placeholder="Proje açıklaması girin"></textarea>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="projectStartDate" class="form-label">Başlama Tarihi</label>
+                            <input type="date" class="form-control" id="projectStartDate">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="projectEndDate" class="form-label">Bitiş Tarihi</label>
+                            <input type="date" class="form-control" id="projectEndDate">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="projectManager" class="form-label">Proje Yöneticisi</label>
+                        <select class="form-select" id="projectManager">
+                        </select>
+                    </div>
+                    
+                    <input type="hidden" id="projectId" value="">
+                    <input type="hidden" id="projectMode" value="add">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-primary" id="saveProjectBtn">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="eventModalLabel">Yeni Etkinlik Ekle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="eventTitle" class="form-label">Etkinlik Başlığı</label>
+                        <input type="text" class="form-control" id="eventTitle" placeholder="Etkinlik başlığını girin">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="eventDescription" class="form-label">Açıklama</label>
+                        <textarea class="form-control" id="eventDescription" rows="3" placeholder="Etkinlik açıklaması girin"></textarea>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="eventDate" class="form-label">Tarih</label>
+                            <input type="date" class="form-control" id="eventDate">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="eventTime" class="form-label">Saat</label>
+                            <input type="time" class="form-control" id="eventTime">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="eventColor" class="form-label">Renk</label>
+                        <select class="form-select" id="eventColor">
+                            <option value="primary" selected>Mavi</option>
+                            <option value="success">Yeşil</option>
+                            <option value="danger">Kırmızı</option>
+                            <option value="warning">Sarı</option>
+                            <option value="info">Açık Mavi</option>
+                            <option value="purple">Mor</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="eventProject" class="form-label">İlgili Proje</label>
+                        <select class="form-select" id="eventProject">
+                            <option value="">Proje seçin</option>
+                        </select>
+                    </div>
+                    
+                    <input type="hidden" id="eventId" value="">
+                    <input type="hidden" id="eventMode" value="add">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-primary" id="saveEventBtn">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="memberModal" tabindex="-1" aria-labelledby="memberModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="memberModalLabel">Yeni Takım Üyesi Ekle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="memberName" class="form-label">Ad Soyad</label>
+                        <input type="text" class="form-control" id="memberName" placeholder="Ad soyad girin">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="memberUsername" class="form-label">Kullanıcı Adı</label>
+                        <input type="text" class="form-control" id="memberUsername" placeholder="Kullanıcı adı girin">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="memberPassword" class="form-label">Şifre</label>
+                        <input type="password" class="form-control" id="memberPassword" placeholder="Şifre girin">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="memberInitials" class="form-label">Baş Harfler</label>
+                        <input type="text" class="form-control" id="memberInitials" placeholder="Baş harfleri girin" maxlength="2">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="memberRole" class="form-label">Rol</label>
+                        <select class="form-select" id="memberRole">
+                            <option value="admin">Yönetici</option>
+                            <option value="manager">Proje Yöneticisi</option>
+                            <option value="developer" selected>Geliştirici</option>
+                            <option value="designer">Tasarımcı</option>
+                        </select>
+                    </div>
+                    
+                    <input type="hidden" id="memberId" value="">
+                    <input type="hidden" id="memberMode" value="add">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-primary" id="saveMemberBtn">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBunu0T5_NYz4qKuZq0f1jjJOqmT_5mxuU",
+            authDomain: "inalsoft.firebaseapp.com",
+            databaseURL: "https://inalsoft-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "inalsoft",
+            storageBucket: "inalsoft.firebasestorage.app",
+            messagingSenderId: "634587679564",
+            appId: "1:634587679564:web:1c29e76fc23895b6e59de9"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const storage = firebase.storage();
+        
+        const userCredentials = {
+            "eylulkay": { 
+                password: "eylulkay039!inal", 
+                displayName: "Eylül Kay", 
+                initials: "EK",
+                role: "Yönetici",
+                email: "eylul@inalsoft.com",
+                bio: "Sosyal Medya Uzmanı",
+                profilePic: "https://avatars.githubusercontent.com/u/177526007?v=4"
+            },
+            "mdusova": { 
+                password: "Mstarda1337$", 
+                displayName: "Mustafa Arda Düşova", 
+                initials: "MD",
+                role: "Yönetici",
+                email: "arda@inalsoft.com",
+                bio: "Full-Stack Developer",
+                profilePic: "https://avatars.githubusercontent.com/u/181568213?s=400&u=9d0c72bdc8f4fd1a21ab9ebffee9db4031170f56&v=4"
+            }
+        };
+        
+        let currentUser = null;
+        let userRef = null;
+        let initialTasks = [];
+        let laterTasks = [];
+        let projects = [];
+        let events = [];
+        let activePage = 'dashboard';
+        let sectionTitles = {
+            initial: "Başlangıçta yapılacaklar",
+            later: "Başlangıçtan sonra yapılacaklar"
+        };
+        let userSettings = {
+            darkMode: false,
+            dateFormat: "dd/MM/yyyy",
+            language: "tr",
+            appTitle: "inalsoft"
+        };
+        
+        const defaultAvatars = [
+            "https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_1280.png",
+            "https://cdn.pixabay.com/photo/2016/04/01/11/25/avatar-1300331_1280.png",
+            "https://cdn.pixabay.com/photo/2016/03/31/19/58/avatar-1295429_1280.png",
+            "https://cdn.pixabay.com/photo/2016/03/31/20/27/avatar-1295773_1280.png",
+            "https://cdn.pixabay.com/photo/2016/03/31/19/56/avatar-1295397_1280.png",
+            "https://cdn.pixabay.com/photo/2016/03/31/19/10/avatar-1294776_1280.png",
+            "https://cdn.pixabay.com/photo/2016/09/01/08/24/smiley-1635449_1280.png",
+            "https://cdn.pixabay.com/photo/2016/03/31/19/11/avatar-1295338_1280.png"
+        ];
+        
+        const loginScreen = document.getElementById('loginScreen');
+        const appContainer = document.getElementById('appContainer');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginButton = document.getElementById('loginButton');
+        const loginError = document.getElementById('loginError');
+        const currentUserName = document.getElementById('currentUserName');
+        const userAvatar = document.getElementById('userAvatar');
+        const onlineCount = document.getElementById('onlineCount');
+        const initialTasksContainer = document.getElementById('initialTasksContainer');
+        const laterTasksContainer = document.getElementById('laterTasksContainer');
+        const logContainer = document.getElementById('logContainer');
+        const addTaskBtn = document.getElementById('addTaskBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const saveTaskBtn = document.getElementById('saveTaskBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const navLinks = document.querySelectorAll('.nav-link[data-page]');
+        const contentPages = document.querySelectorAll('.content-page');
+        const projectsMenu = document.getElementById('projectsMenu');
+        const editableTitles = document.querySelectorAll('.editable-title');
+        const addProjectBtn = document.getElementById('addProjectBtn');
+        const saveSectionTitleBtn = document.getElementById('saveSectionTitleBtn');
+        const saveProjectBtn = document.getElementById('saveProjectBtn');
+        const projectModal = document.getElementById('projectModal');
+        const sectionTitleModal = document.getElementById('sectionTitleModal');
+        const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+        const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+        const saveProfileBtn = document.getElementById('saveProfileBtn');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        const avatarUpload = document.getElementById('avatarUpload');
+        const profileAvatar = document.getElementById('profileAvatar');
+        const avatarSelector = document.getElementById('avatarSelector');
+        const saveEventBtn = document.getElementById('saveEventBtn');
+        const saveMemberBtn = document.getElementById('saveMemberBtn');
+        const addMemberBtn = document.getElementById('addMemberBtn');
+        const prevMonthBtn = document.getElementById('prevMonthBtn');
+        const nextMonthBtn = document.getElementById('nextMonthBtn');
+        const calendarTitle = document.getElementById('calendarTitle');
+        const calendarBody = document.getElementById('calendarBody');
+        const addEventBtn = document.getElementById('addEventBtn');
+        
+        let taskModal;
+        let projectModalObj;
+        let sectionTitleModalObj;
+        let eventModalObj;
+        let memberModalObj;
+        
+        const sampleInitialTasks = [
+            { id: 1, name: "İsim bulunacak. (Kısa, öz ve akılda kalıcı bir isim)", persons: ["MD"], status: "tamamlandi", startDate: "2025-03-21", endDate: "", completed: true, project: "web-sitesi", description: "" },
+            { id: 2, name: "Domain satın alınacak.", persons: ["MD"], status: "tamamlandi", startDate: "2025-03-22", endDate: "", completed: true, project: "web-sitesi", description: "" },
+            { id: 3, name: "Instagram kullanıcı adı alınacak.", persons: ["MD"], status: "tamamlandi", startDate: "2025-03-22", endDate: "", completed: true, project: "web-sitesi", description: "" },
+            { id: 4, name: "Slogan bulunacak. (Kısa ve akılda kalıcı.)", persons: ["MD", "EK"], status: "uzerinde-dusuruluyor", startDate: "2025-03-25", endDate: "", completed: false, project: "marka-kimliği", description: "" },
+            { id: 5, name: "İsme uygun logo yapılacak. (Minimal tasarım)", persons: ["EK"], status: "uzerinde-dusuruluyor", startDate: "2025-03-26", endDate: "", completed: false, project: "marka-kimliği", description: "" },
+            { id: 6, name: "Renk paleti ayarlanacak. (3 renkli)", persons: ["EK"], status: "uzerinde-dusuruluyor", startDate: "2025-03-27", endDate: "", completed: false, project: "marka-kimliği", description: "" },
+            { id: 7, name: "Domain Cloudflare'e bağlanacak. (Kolay DNS yönetimi için)", persons: ["MD"], status: "tamamlandi", startDate: "2025-03-22", endDate: "", completed: true, project: "web-sitesi", description: "" },
+            { id: 8, name: "Mail sunucu kurulacak. (info, şirket, arda, medya, vs. için)", persons: ["MD"], status: "yapiliyor", startDate: "2025-03-23", endDate: "", completed: false, project: "teknik-altyapı", description: "" },
+            { id: 9, name: "Construction Page yapılacak. (Bu websitesi yapım aşamasındadır sayfası)", persons: ["EK"], status: "yapiliyor", startDate: "2025-03-23", endDate: "", completed: false, project: "web-sitesi", description: "" },
+            { id: 10, name: "BTK Akademi sertifikaları alınacak.", persons: ["MD"], status: "yapiliyor", startDate: "2025-03-23", endDate: "", completed: false, project: "", description: "" },
+            { id: 11, name: "LinkedIn premium alınacak.", persons: ["EK"], status: "tamamlandi", startDate: "2025-03-22", endDate: "", completed: true, project: "", description: "" }
+        ];
+        
+        const sampleLaterTasks = [
+            { id: 12, name: "Marka kiti hazırlanacak.", persons: ["EK"], status: "uzerinde-dusuruluyor", startDate: "2025-03-22", endDate: "", completed: false, project: "marka-kimliği", description: "" },
+            { id: 13, name: "Stok gönderi ve hikaye tasarımları yapılacak.", persons: ["MD", "EK"], status: "uzerinde-dusuruluyor", startDate: "2025-03-22", endDate: "", completed: false, project: "sosyal-medya", description: "" }
+        ];
+        
+        const sampleProjects = [
+            { id: "web-sitesi", name: "Web Sitesi", description: "Şirket web sitesinin geliştirilmesi", manager: "MD", startDate: "2025-03-20", endDate: "2025-04-15", color: "primary" },
+            { id: "marka-kimliği", name: "Marka Kimliği", description: "Marka kimliği oluşturma çalışmaları", manager: "EK", startDate: "2025-03-22", endDate: "2025-04-10", color: "purple" },
+            { id: "teknik-altyapı", name: "Teknik Altyapı", description: "Teknik altyapı kurulum ve yapılandırması", manager: "MD", startDate: "2025-03-23", endDate: "2025-04-05", color: "info" },
+            { id: "sosyal-medya", name: "Sosyal Medya", description: "Sosyal medya hesaplarının yönetimi", manager: "EK", startDate: "2025-03-25", endDate: "2025-04-30", color: "warning" }
+        ];
+        
+        const sampleEvents = [
+            { id: 1, title: "Ekip Toplantısı", description: "Haftalık durum değerlendirme toplantısı", date: "2025-03-25", time: "10:00", color: "primary", project: "web-sitesi" },
+            { id: 2, title: "Logo Revizyonu", description: "Logo tasarımı revizyon çalışması", date: "2025-03-27", time: "14:00", color: "purple", project: "marka-kimliği" },
+            { id: 3, title: "Müşteri Sunumu", description: "İlk taslak sunumu", date: "2025-04-01", time: "11:00", color: "success", project: "" },
+            { id: 4, title: "Domain Yenileme", description: "Domain yenileme işlemi", date: "2025-03-28", time: "09:00", color: "info", project: "teknik-altyapı" }
+        ];
+        
+        document.addEventListener('DOMContentLoaded', init);
+        
+        function init() {
+            taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
+            projectModalObj = new bootstrap.Modal(projectModal);
+            sectionTitleModalObj = new bootstrap.Modal(sectionTitleModal);
+            eventModalObj = new bootstrap.Modal(document.getElementById('eventModal'));
+            memberModalObj = new bootstrap.Modal(document.getElementById('memberModal'));
+            
+            loginButton.addEventListener('click', handleLogin);
+            
+            passwordInput.addEventListener('keyup', e => {
+                if (e.key === 'Enter') {
+                    handleLogin();
+                }
+            });
+            
+            addTaskBtn.addEventListener('click', () => openAddTaskModal('initial'));
+            
+            document.querySelectorAll('.add-task-row').forEach(row => {
+                row.addEventListener('click', function() {
+                    const section = this.getAttribute('data-section');
+                    openAddTaskModal(section);
+                });
+            });
+            
+            saveTaskBtn.addEventListener('click', saveTask);
+            
+            saveBtn.addEventListener('click', saveAllChanges);
+            
+            logoutBtn.addEventListener('click', logout);
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const page = this.getAttribute('data-page');
+                    changePage(page);
+                });
+            });
+            
+            editableTitles.forEach(title => {
+                title.addEventListener('click', function() {
+                    const section = this.getAttribute('data-section');
+                    openSectionTitleModal(section);
+                });
+            });
+            
+            addProjectBtn.addEventListener('click', () => openProjectModal());
+            
+            saveSectionTitleBtn.addEventListener('click', saveSectionTitle);
+            
+            saveProjectBtn.addEventListener('click', saveProject);
+            
+            applyFiltersBtn.addEventListener('click', applyFilters);
+            
+            resetFiltersBtn.addEventListener('click', resetFilters);
+            
+            saveProfileBtn.addEventListener('click', saveProfile);
+            
+            saveSettingsBtn.addEventListener('click', saveSettings);
+            
+            avatarUpload.addEventListener('change', handleAvatarUpload);
+            
+            saveEventBtn.addEventListener('click', saveEvent);
+            
+            saveMemberBtn.addEventListener('click', saveMember);
+            
+            addMemberBtn.addEventListener('click', () => openMemberModal());
+            
+            prevMonthBtn.addEventListener('click', () => changeCalendarMonth(-1));
+            nextMonthBtn.addEventListener('click', () => changeCalendarMonth(1));
+            
+            addEventBtn.addEventListener('click', () => openEventModal());
+        }
+        
+        function handleLogin() {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+            
+            if (!userCredentials[username]) {
+                loginError.textContent = "Kullanıcı adı bulunamadı.";
+                return;
+            }
+            
+            if (userCredentials[username].password !== password) {
+                loginError.textContent = "Şifre yanlış.";
+                return;
+            }
+            
+            currentUser = username;
+            const userInfo = userCredentials[username];
+            
+            currentUserName.textContent = userInfo.displayName;
+            
+            if (userInfo.profilePic) {
+                userAvatar.innerHTML = '';
+                userAvatar.style.backgroundImage = `url(${userInfo.profilePic})`;
+            } else {
+                userAvatar.textContent = userInfo.initials;
+                userAvatar.style.backgroundImage = 'none';
+                
+                const colors = ['#0d6efd', '#6610f2', '#6f42c1', '#d63384', '#dc3545', '#fd7e14', '#198754'];
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                userAvatar.style.backgroundColor = randomColor;
+            }
+            
+            loginScreen.style.display = 'none';
+            appContainer.style.display = 'block';
+            
+            trackOnlineUser();
+            
+            loadDataFromFirebase();
+            
+            logActivity(`${userInfo.displayName} giriş yaptı.`);
+        }
+        
+        function logout() {
+            if (userRef) {
+                userRef.remove();
+            }
+            
+            currentUser = null;
+            userRef = null;
+            
+            appContainer.style.display = 'none';
+            loginScreen.style.display = 'flex';
+            
+            usernameInput.value = '';
+            passwordInput.value = '';
+            loginError.textContent = '';
+        }
+        
+        function loadDataFromFirebase() {
+            const dataRef = database.ref('inalsoft');
+            
+            dataRef.once('value')
+                .then(snapshot => {
+                    const data = snapshot.val();
+                    
+                    if (data) {
+                        if (data.tasks) {
+                            initialTasks = data.tasks.initialTasks || [];
+                            laterTasks = data.tasks.laterTasks || [];
+                        } else {
+                            initialTasks = [...sampleInitialTasks];
+                            laterTasks = [...sampleLaterTasks];
+                        }
+                        
+                        if (data.projects) {
+                            projects = data.projects || [];
+                        } else {
+                            projects = [...sampleProjects];
+                        }
+                        
+                        if (data.events) {
+                            events = data.events || [];
+                        } else {
+                            events = [...sampleEvents];
+                        }
+                        
+                        if (data.sectionTitles) {
+                            sectionTitles = data.sectionTitles;
+                        }
+                        
+                        if (data.userSettings) {
+                            userSettings = data.userSettings;
+                        }
+                        
+                        renderAll();
+                        
+                        logActivity("Veriler başarıyla yüklendi.");
+                    } else {
+                        initialTasks = [...sampleInitialTasks];
+                        laterTasks = [...sampleLaterTasks];
+                        projects = [...sampleProjects];
+                        events = [...sampleEvents];
+                        
+                        renderAll();
+                        
+                        saveAllChanges();
+                        
+                        logActivity("Örnek veriler yüklendi.");
+                    }
+                    
+                    updateDashboardStats();
+                })
+                .catch(error => {
+                    console.error("Veri yükleme hatası:", error);
+                    logActivity(`Veri yükleme hatası: ${error.message}`);
+                    
+                    initialTasks = [...sampleInitialTasks];
+                    laterTasks = [...sampleLaterTasks];
+                    projects = [...sampleProjects];
+                    events = [...sampleEvents];
+                    
+                    renderAll();
+                });
+            
+            dataRef.on('value', snapshot => {
+                const data = snapshot.val();
+                
+                if (data && data.lastUpdate && data.lastUpdate.user !== userCredentials[currentUser].displayName) {
+                    if (data.tasks) {
+                        initialTasks = data.tasks.initialTasks || [];
+                        laterTasks = data.tasks.laterTasks || [];
+                    }
+                    
+                    if (data.projects) {
+                        projects = data.projects || [];
+                    }
+                    
+                    if (data.events) {
+                        events = data.events || [];
+                    }
+                    
+                    if (data.sectionTitles) {
+                        sectionTitles = data.sectionTitles;
+                    }
+                    
+                    renderAll();
+                    
+                    updateDashboardStats();
+                    
+                    logActivity(`${data.lastUpdate.user} tarafından yapılan değişiklikler yüklendi.`);
+                }
+            });
+        }
+        
+        function renderAll() {
+            renderTasks();
+            renderProjects();
+            renderEvents();
+            renderSectionTitles();
+            renderCalendar();
+            renderDashboard();
+            renderTeam();
+            renderReports();
+            applyUserSettings();
+            
+            attachEventListeners();
+        }
+        
+        function renderTasks() {
+            initialTasksContainer.innerHTML = '';
+            initialTasks.forEach(task => {
+                const row = createTaskRow(task, 'initial');
+                initialTasksContainer.appendChild(row);
+            });
+            
+            laterTasksContainer.innerHTML = '';
+            laterTasks.forEach(task => {
+                const row = createTaskRow(task, 'later');
+                laterTasksContainer.appendChild(row);
+            });
+        }
+        
+        function renderProjects() {
+            projectsMenu.innerHTML = '';
+            projects.forEach(project => {
+                const item = document.createElement('li');
+                item.className = 'nav-item';
+                item.innerHTML = `
+                    <a class="nav-link" href="#" data-project-id="${project.id}">
+                        <i class="bi bi-folder nav-item-icon" style="color: var(--bs-${project.color});"></i>
+                        ${project.name}
+                    </a>
+                `;
+                projectsMenu.appendChild(item);
+            });
+            
+            const modalTaskProject = document.getElementById('modalTaskProject');
+            modalTaskProject.innerHTML = '<option value="">Proje seçin</option>';
+            
+            projects.forEach(project => {
+                const option = document.createElement('option');
+                option.value = project.id;
+                option.textContent = project.name;
+                modalTaskProject.appendChild(option);
+            });
+            
+            const eventProject = document.getElementById('eventProject');
+            eventProject.innerHTML = '<option value="">Proje seçin</option>';
+            
+            projects.forEach(project => {
+                const option = document.createElement('option');
+                option.value = project.id;
+                option.textContent = project.name;
+                eventProject.appendChild(option);
+            });
+            
+            const activeProjectsList = document.getElementById('activeProjectsList');
+            if (activeProjectsList) {
+                activeProjectsList.innerHTML = '';
+                
+                projects.forEach(project => {
+                    const allTasks = [...initialTasks, ...laterTasks].filter(task => task.project === project.id);
+                    const completedTasks = allTasks.filter(task => task.completed).length;
+                    const totalTasks = allTasks.length;
+                    const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+                    
+                    const manager = userCredentials[project.manager];
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="me-2" style="width: 12px; height: 12px; border-radius: 50%; background-color: var(--bs-${project.color});"></div>
+                                <div>${project.name}</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="progress progress-sm flex-grow-1 me-2" style="height: 5px;">
+                                    <div class="progress-bar bg-${project.color}" style="width: ${progress}%;"></div>
+                                </div>
+                                <span>${progress}%</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="avatar-group">
+                                <div class="avatar avatar-sm" style="background-color: #6610f2;" title="${manager ? manager.displayName : 'Atanmamış'}">
+                                    ${manager ? manager.initials : '?'}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-${project.color}">${getStatusFromProgress(progress)}</span>
+                        </td>
+                    `;
+                    
+                    activeProjectsList.appendChild(row);
+                });
+            }
+            
+            const projectProgressList = document.getElementById('projectProgressList');
+            if (projectProgressList) {
+                projectProgressList.innerHTML = '';
+                
+                projects.forEach(project => {
+                    const allTasks = [...initialTasks, ...laterTasks].filter(task => task.project === project.id);
+                    const completedTasks = allTasks.filter(task => task.completed).length;
+                    const totalTasks = allTasks.length;
+                    const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="me-2" style="width: 12px; height: 12px; border-radius: 50%; background-color: var(--bs-${project.color});"></div>
+                                <div>${project.name}</div>
+                            </div>
+                        </td>
+                        <td>${totalTasks}</td>
+                        <td>${completedTasks}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="progress progress-sm flex-grow-1 me-2" style="height: 8px;">
+                                    <div class="progress-bar bg-${project.color}" style="width: ${progress}%;"></div>
+                                </div>
+                                <span>${progress}%</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-${project.color}">${getStatusFromProgress(progress)}</span>
+                        </td>
+                    `;
+                    
+                    projectProgressList.appendChild(row);
+                });
+            }
+        }
+        
+        function getStatusFromProgress(progress) {
+            if (progress < 20) return "Başlangıç";
+            if (progress < 50) return "Devam Ediyor";
+            if (progress < 80) return "İlerleme";
+            if (progress < 100) return "Son Aşama";
+            return "Tamamlandı";
+        }
+        
+        function renderEvents() {
+            const upcomingEventsList = document.getElementById('upcomingEventsList');
+            if (upcomingEventsList) {
+                upcomingEventsList.innerHTML = '';
+                
+                const sortedEvents = [...events].sort((a, b) => {
+                    const dateA = new Date(a.date + ' ' + a.time);
+                    const dateB = new Date(b.date + ' ' + b.time);
+                    return dateA - dateB;
+                });
+                
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const upcomingEvents = sortedEvents.filter(event => {
+                    const eventDate = new Date(event.date);
+                    return eventDate >= today;
+                }).slice(0, 5); 
+                
+                upcomingEvents.forEach(event => {
+                    const eventDate = new Date(event.date + ' ' + event.time);
+                    const formattedDate = formatDate(eventDate);
+                    const formattedTime = eventDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+                    
+                    const project = event.project ? projects.find(p => p.id === event.project) : null;
+                    
+                    const item = document.createElement('li');
+                    item.className = 'list-group-item border-start-0 border-end-0';
+                    item.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold">${event.title}</div>
+                                <div class="text-muted small">
+                                    ${event.description}
+                                    ${project ? `<span class="badge bg-${project.color} ms-1">${project.name}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="badge bg-${event.color}">${formattedDate}</div>
+                                <div class="small">${formattedTime}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    upcomingEventsList.appendChild(item);
+                });
+                
+                if (upcomingEvents.length === 0) {
+                    const item = document.createElement('li');
+                    item.className = 'list-group-item text-center';
+                    item.innerHTML = 'Yaklaşan etkinlik bulunmuyor.';
+                    upcomingEventsList.appendChild(item);
+                }
+            }
+        }
+        
+        function formatDate(date) {
+            const day = date.getDate();
+            const month = date.toLocaleString('tr-TR', { month: 'short' });
+            return `${day} ${month}`;
+        }
+        
+        function renderSectionTitles() {
+            document.querySelectorAll('.editable-title').forEach(title => {
+                const section = title.getAttribute('data-section');
+                title.textContent = sectionTitles[section] || `Bölüm ${section}`;
+            });
+        }
+        
+        function renderCalendar() {
+            const calendarBody = document.getElementById('calendarBody');
+            const calendarTitle = document.getElementById('calendarTitle');
+            
+            if (!calendarBody || !calendarTitle) return;
+            
+            const currentDate = new Date();
+            const currentMonth = currentDate.getMonth();
+            const currentYear = currentDate.getFullYear();
+            
+            const monthName = currentDate.toLocaleString('tr-TR', { month: 'long' });
+            calendarTitle.textContent = `${monthName} ${currentYear}`;
+            
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            
+            let firstDayOfWeek = firstDay.getDay() - 1;
+            if (firstDayOfWeek < 0) firstDayOfWeek = 6; 
+            
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const totalDays = lastDay.getDate();
+            
+            const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
+            
+            calendarBody.innerHTML = '';
+            
+            let date = 1;
+            let nextMonthDate = 1;
+            
+            for (let i = 0; i < 6; i++) {
+                const row = document.createElement('tr');
+                
+                for (let j = 0; j < 7; j++) {
+                    const cell = document.createElement('td');
+                    cell.className = 'calendar-day';
+                    
+                    if (i === 0 && j < firstDayOfWeek) {
+                        const prevDay = prevMonthLastDay - firstDayOfWeek + j + 1;
+                        cell.innerHTML = `<div class="text-muted small">${prevDay}</div>`;
+                        cell.classList.add('bg-light');
+                    } else if (date > totalDays) {
+                        cell.innerHTML = `<div class="text-muted small">${nextMonthDate}</div>`;
+                        cell.classList.add('bg-light');
+                        nextMonthDate++;
+                    } else {
+                        cell.innerHTML = `<div class="fw-bold">${date}</div>`;
+                        
+                        if (date === currentDate.getDate() && currentMonth === currentDate.getMonth() && currentYear === currentDate.getFullYear()) {
+                            cell.classList.add('bg-light', 'border-primary');
+                        }
+                        
+                        const dayEvents = events.filter(event => {
+                            const eventDate = new Date(event.date);
+                            return eventDate.getDate() === date && 
+                                   eventDate.getMonth() === currentMonth && 
+                                   eventDate.getFullYear() === currentYear;
+                        });
+                        
+                        dayEvents.forEach(event => {
+                            const eventDiv = document.createElement('div');
+                            eventDiv.className = `calendar-event bg-${event.color} text-white`;
+                            eventDiv.innerHTML = `${event.time} - ${event.title}`;
+                            eventDiv.setAttribute('data-event-id', event.id);
+                            eventDiv.title = event.description;
+                            cell.appendChild(eventDiv);
+                        });
+                        
+                        date++;
+                    }
+                    
+                    row.appendChild(cell);
+                }
+                
+                calendarBody.appendChild(row);
+                
+                if (date > totalDays && nextMonthDate > 7) break;
+            }
+        }
+        
+        function changeCalendarMonth(change) {
+            const currentDate = new Date();
+            const newMonth = currentDate.getMonth() + change;
+            
+            currentDate.setMonth(newMonth);
+            
+            renderCalendar();
+        }
+        
+        function renderDashboard() {
+            const upcomingTasksList = document.getElementById('upcomingTasksList');
+            if (upcomingTasksList) {
+                upcomingTasksList.innerHTML = '';
+                
+                const allTasks = [...initialTasks, ...laterTasks];
+                
+                const pendingTasks = allTasks.filter(task => !task.completed)
+                    .sort((a, b) => {
+                        const dateA = new Date(a.endDate || a.startDate);
+                        const dateB = new Date(b.endDate || b.startDate);
+                        return dateA - dateB;
+                    });
+                
+                const upcomingTasks = pendingTasks.slice(0, 5);
+                
+                upcomingTasks.forEach(task => {
+                    const dueDate = new Date(task.endDate || task.startDate);
+                    const formattedDate = formatDate(dueDate);
+                    
+                    const project = task.project ? projects.find(p => p.id === task.project) : null;
+                    
+                    const item = document.createElement('li');
+                    item.className = 'list-group-item border-start-0 border-end-0';
+                    item.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div>${task.name}</div>
+                                <div class="text-muted small">
+                                    ${project ? `<span class="badge bg-${project.color}">${project.name}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="badge status-${task.status}">${getStatusText(task.status)}</div>
+                                <div class="small">${formattedDate}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    upcomingTasksList.appendChild(item);
+                });
+                
+                if (upcomingTasks.length === 0) {
+                    const item = document.createElement('li');
+                    item.className = 'list-group-item text-center';
+                    item.innerHTML = 'Yaklaşan görev bulunmuyor.';
+                    upcomingTasksList.appendChild(item);
+                }
+            }
+            
+            const recentlyCompletedList = document.getElementById('recentlyCompletedList');
+            if (recentlyCompletedList) {
+                recentlyCompletedList.innerHTML = '';
+                
+                const allTasks = [...initialTasks, ...laterTasks];
+                
+                const completedTasks = allTasks.filter(task => task.completed)
+                    .sort((a, b) => {
+                        const dateA = new Date(a.endDate || a.startDate);
+                        const dateB = new Date(b.endDate || b.startDate);
+                        return dateB - dateA; 
+                    });
+                
+                const recentlyCompleted = completedTasks.slice(0, 5);
+                
+                recentlyCompleted.forEach(task => {
+                    const completedDate = new Date(task.endDate || task.startDate);
+                    const formattedDate = formatDate(completedDate);
+                    
+                    const project = task.project ? projects.find(p => p.id === task.project) : null;
+                    
+                    const item = document.createElement('li');
+                    item.className = 'list-group-item border-start-0 border-end-0';
+                    item.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div>${task.name}</div>
+                                <div class="text-muted small">
+                                    ${project ? `<span class="badge bg-${project.color}">${project.name}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="badge status-tamamlandi">Tamamlandı</div>
+                                <div class="small">${formattedDate}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    recentlyCompletedList.appendChild(item);
+                });
+                
+                if (recentlyCompleted.length === 0) {
+                    const item = document.createElement('li');
+                    item.className = 'list-group-item text-center';
+                    item.innerHTML = 'Tamamlanan görev bulunmuyor.';
+                    recentlyCompletedList.appendChild(item);
+                }
+            }
+            
+            const teamActivityList = document.getElementById('teamActivityList');
+            if (teamActivityList) {
+                const activities = [
+                    { user: 'EK', action: 'Logo tasarımını tamamladı', time: '2 saat önce', project: 'marka-kimliği' },
+                    { user: 'MD', action: 'Domain ayarlarını güncelledi', time: '4 saat önce', project: 'teknik-altyapı' },
+                    { user: 'EK', action: 'Yeni bir görev ekledi', time: '5 saat önce', project: 'sosyal-medya' },
+                    { user: 'MD', action: 'Construction sayfasını inceledi', time: '1 gün önce', project: 'web-sitesi' },
+                    { user: 'EK', action: 'Renk paletini güncelledi', time: '1 gün önce', project: 'marka-kimliği' }
+                ];
+                
+                teamActivityList.innerHTML = '';
+                
+                activities.forEach(activity => {
+                    const project = activity.project ? projects.find(p => p.id === activity.project) : null;
+                    
+                    const user = userCredentials[activity.user];
+                    
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item border-start-0 border-end-0';
+                    item.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <div class="avatar avatar-sm me-3" style="background-color: #6610f2;">${user ? user.initials : '?'}</div>
+                            <div>
+                                <div class="fw-bold">${user ? user.displayName : 'Bilinmeyen Kullanıcı'}</div>
+                                <div class="d-flex align-items-center small">
+                                    <span>${activity.action}</span>
+                                    ${project ? `<span class="badge bg-${project.color} ms-1">${project.name}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="ms-auto text-muted small">${activity.time}</div>
+                        </div>
+                    `;
+                    
+                    teamActivityList.appendChild(item);
+                });
+            }
+        }
+        
+        function renderTeam() {
+            const teamMembersContainer = document.getElementById('teamMembersContainer');
+            if (teamMembersContainer) {
+                teamMembersContainer.innerHTML = '';
+                
+                const teamMembers = Object.entries(userCredentials).map(([username, info]) => ({
+                    username,
+                    ...info
+                }));
+                
+                teamMembers.forEach(member => {
+                    const card = document.createElement('div');
+                    card.className = 'col-lg-4 col-md-6 mb-4';
+                    
+                    const memberProjects = projects.filter(project => project.manager === member.username);
+                    
+                    const memberTasks = [...initialTasks, ...laterTasks].filter(task => 
+                        task.persons.includes(member.username)
+                    );
+                    
+                    const completedTasks = memberTasks.filter(task => task.completed).length;
+                    const totalTasks = memberTasks.length;
+                    const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+                    
+                    card.innerHTML = `
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <div class="avatar mx-auto mb-3" style="width: 80px; height: 80px; font-size: 32px; ${member.profilePic ? `background-image: url(${member.profilePic});` : 'background-color: #6610f2;'}">${member.profilePic ? '' : member.initials}</div>
+                                <h5 class="card-title">${member.displayName}</h5>
+                                <p class="card-text text-muted">${getRoleName(member.role)}</p>
+                                
+                                <div class="d-flex justify-content-center mb-3">
+                                    <div class="px-3 text-center border-end">
+                                        <h6>${totalTasks}</h6>
+                                        <small class="text-muted">Görev</small>
+                                    </div>
+                                    <div class="px-3 text-center border-end">
+                                        <h6>${memberProjects.length}</h6>
+                                        <small class="text-muted">Proje</small>
+                                    </div>
+                                    <div class="px-3 text-center">
+                                        <h6>${progress}%</h6>
+                                        <small class="text-muted">Tamamlama</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="progress mb-3" style="height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: ${progress}%"></div>
+                                </div>
+                                
+                                <div class="text-start small mb-3">
+                                    <div><i class="bi bi-envelope me-2"></i>${member.email || 'Email belirtilmemiş'}</div>
+                                </div>
+                                
+                                <div class="d-flex mt-3">
+                                    <button class="btn btn-sm btn-outline-primary me-2 flex-grow-1" data-username="${member.username}" onclick="openMemberModal('${member.username}')">
+                                        <i class="bi bi-pencil"></i> Düzenle
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary flex-grow-1">
+                                        <i class="bi bi-chat"></i> Mesaj
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    teamMembersContainer.appendChild(card);
+                });
+                
+                const projectManager = document.getElementById('projectManager');
+                if (projectManager) {
+                    projectManager.innerHTML = '';
+                    
+                    teamMembers.forEach(member => {
+                        const option = document.createElement('option');
+                        option.value = member.username;
+                        option.textContent = member.displayName;
+                        projectManager.appendChild(option);
+                    });
+                }
+                
+                const filterPersonsContainer = document.getElementById('filterPersonsContainer');
+                if (filterPersonsContainer) {
+                    filterPersonsContainer.innerHTML = '';
+                    
+                    teamMembers.forEach(member => {
+                        const filterItem = document.createElement('div');
+                        filterItem.className = 'form-check';
+                        filterItem.innerHTML = `
+                            <input class="form-check-input filter-person" type="checkbox" value="${member.username}" id="filter${member.username}" checked>
+                            <label class="form-check-label" for="filter${member.username}">
+                                ${member.displayName}
+                            </label>
+                        `;
+                        
+                        filterPersonsContainer.appendChild(filterItem);
+                    });
+                }
+            }
+        }
+        
+        function renderReports() {
+            const allTasks = [...initialTasks, ...laterTasks];
+            
+            const totalTasks = allTasks.length;
+            const completedCount = allTasks.filter(task => task.status === 'tamamlandi').length;
+            const inProgressCount = allTasks.filter(task => task.status === 'yapiliyor').length;
+            const planningCount = allTasks.filter(task => task.status === 'uzerinde-dusuruluyor').length;
+            
+            const completedPercentage = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
+            const inProgressPercentage = totalTasks > 0 ? Math.round((inProgressCount / totalTasks) * 100) : 0;
+            const planningPercentage = totalTasks > 0 ? Math.round((planningCount / totalTasks) * 100) : 0;
+            
+            document.getElementById('completedPercentage').textContent = `${completedPercentage}%`;
+            document.getElementById('inProgressPercentage').textContent = `${inProgressPercentage}%`;
+            document.getElementById('planningPercentage').textContent = `${planningPercentage}%`;
+            
+            document.getElementById('progressCompleted').style.width = `${completedPercentage}%`;
+            document.getElementById('progressCompleted').textContent = `${completedPercentage}%`;
+            
+            document.getElementById('progressInProgress').style.width = `${inProgressPercentage}%`;
+            document.getElementById('progressInProgress').textContent = `${inProgressPercentage}%`;
+            
+            document.getElementById('progressPlanning').style.width = `${planningPercentage}%`;
+            document.getElementById('progressPlanning').textContent = `${planningPercentage}%`;
+            
+            const taskDistributionList = document.getElementById('taskDistributionList');
+            if (taskDistributionList) {
+                taskDistributionList.innerHTML = '';
+                
+                const teamMembers = Object.entries(userCredentials).map(([username, info]) => ({
+                    username,
+                    ...info
+                }));
+                
+                teamMembers.forEach(member => {
+                    const memberTasks = allTasks.filter(task => 
+                        task.persons.includes(member.username)
+                    );
+                    
+                    const completedTasks = memberTasks.filter(task => task.completed).length;
+                    const totalTasks = memberTasks.length;
+                    const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+                    
+                    const item = document.createElement('li');
+                    item.className = 'list-group-item';
+                    item.innerHTML = `
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="avatar avatar-sm me-3" style="${member.profilePic ? `background-image: url(${member.profilePic});` : 'background-color: #6610f2;'}">${member.profilePic ? '' : member.initials}</div>
+                            <div class="me-auto">
+                                <div class="fw-bold">${member.displayName}</div>
+                                <div class="text-muted small">${getRoleName(member.role)}</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">${completedTasks}/${totalTasks}</div>
+                                <div class="text-muted small">${progress}% Tamamlandı</div>
+                            </div>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" style="width: ${progress}%"></div>
+                        </div>
+                    `;
+                    
+                    taskDistributionList.appendChild(item);
+                });
+            }
+        }
+        
+        function getRoleName(role) {
+            switch(role) {
+                case 'admin': return 'Yönetici';
+                case 'manager': return 'Proje Yöneticisi';
+                case 'developer': return 'Geliştirici';
+                case 'designer': return 'Tasarımcı';
+                default: return role;
+            }
+        }
+        
+        function applyUserSettings() {
+            if (currentUser) {
+                const userInfo = userCredentials[currentUser];
+                
+                document.getElementById('profileName').textContent = userInfo.displayName;
+                document.getElementById('profileRole').textContent = getRoleName(userInfo.role);
+                
+                if (userInfo.profilePic) {
+                    profileAvatar.innerHTML = '';
+                    profileAvatar.style.backgroundImage = `url(${userInfo.profilePic})`;
+                } else {
+                    profileAvatar.textContent = userInfo.initials;
+                    profileAvatar.style.backgroundImage = 'none';
+                    profileAvatar.style.backgroundColor = '#6610f2';
+                }
+                
+                const allTasks = [...initialTasks, ...laterTasks];
+                const userTasks = allTasks.filter(task => 
+                    task.persons.includes(currentUser)
+                );
+                
+                const completedTasks = userTasks.filter(task => task.completed).length;
+                
+                const userProjects = projects.filter(project => 
+                    project.manager === currentUser
+                );
+                
+                document.getElementById('profileTasksCount').textContent = userTasks.length;
+                document.getElementById('profileCompletedCount').textContent = completedTasks;
+                document.getElementById('profileProjectsCount').textContent = userProjects.length;
+                
+                document.getElementById('profileFullName').value = userInfo.displayName;
+                document.getElementById('profileUsername').value = currentUser;
+                document.getElementById('profileInitials').value = userInfo.initials;
+                document.getElementById('profileEmail').value = userInfo.email || '';
+                document.getElementById('profileBio').value = userInfo.bio || '';
+            }
+            
+            const avatarSelector = document.getElementById('avatarSelector');
+            if (avatarSelector) {
+                avatarSelector.innerHTML = '';
+                
+                defaultAvatars.forEach((avatar, index) => {
+                    const avatarOption = document.createElement('div');
+                    avatarOption.className = 'avatar-option';
+                    avatarOption.style.backgroundImage = `url(${avatar})`;
+                    avatarOption.style.backgroundSize = 'cover';
+                    avatarOption.setAttribute('data-avatar-url', avatar);
+                    
+                    avatarOption.addEventListener('click', function() {
+                        document.querySelectorAll('.avatar-option').forEach(opt => {
+                            opt.classList.remove('selected');
+                        });
+                        
+                        this.classList.add('selected');
+                        
+                        profileAvatar.innerHTML = '';
+                        profileAvatar.style.backgroundImage = `url(${avatar})`;
+                        profileAvatar.style.backgroundColor = 'transparent';
+                    });
+                    
+                    avatarSelector.appendChild(avatarOption);
+                });
+            }
+        }
+        
+        function updateDashboardStats() {
+            document.getElementById('totalProjectsCount').textContent = projects.length;
+            
+            const allTasks = [...initialTasks, ...laterTasks];
+            
+            const completedTasks = allTasks.filter(task => task.completed).length;
+            document.getElementById('completedTasksCount').textContent = completedTasks;
+            
+            const pendingTasks = allTasks.filter(task => !task.completed).length;
+            document.getElementById('pendingTasksCount').textContent = pendingTasks;
+            
+            const teamMembers = Object.keys(userCredentials).length;
+            document.getElementById('teamMembersCount').textContent = teamMembers;
+        }
+        
+        function changePage(page) {
+            activePage = page;
+            
+            contentPages.forEach(p => {
+                p.classList.remove('active');
+            });
+            
+            const selectedPage = document.getElementById(`${page}-page`);
+            if (selectedPage) {
+                selectedPage.classList.add('active');
+            }
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('data-page') === page) {
+                    link.classList.add('active');
+                }
+            });
+            
+            document.querySelectorAll('.nav-link').forEach(link => {
+                if (link.getAttribute('data-page') === page) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+            
+            document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+                if (link.getAttribute('data-page') === page) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+            
+            if (page === 'calendar') {
+                renderCalendar();
+            } else if (page === 'dashboard') {
+                updateDashboardStats();
+                renderDashboard();
+            } else if (page === 'reports') {
+                renderReports();
+            } else if (page === 'profile') {
+                applyUserSettings();
+            }
+        }
+        
+        function createTaskRow(task, section) {
+            const row = document.createElement('tr');
+            row.setAttribute('data-id', task.id);
+            
+            const startDateFormatted = formatDateForDisplay(task.startDate);
+            const endDateFormatted = formatDateForDisplay(task.endDate);
+            
+            const statusClass = `status-badge status-${task.status}`;
+            const statusText = getStatusText(task.status);
+            
+            let personsHtml = '<div class="avatar-group">';
+            
+            task.persons.forEach(person => {
+                const userInfo = userCredentials[person];
+                if (userInfo) {
+                    if (userInfo.profilePic) {
+                        personsHtml += `<div class="avatar avatar-sm" style="background-image: url(${userInfo.profilePic});" title="${userInfo.displayName}"></div>`;
+                    } else {
+                        personsHtml += `<div class="avatar avatar-sm" style="background-color: #6610f2;" title="${userInfo.displayName}">${userInfo.initials}</div>`;
+                    }
+                }
+            });
+            
+            personsHtml += '</div>';
+            
+            row.innerHTML = `
+                <td>
+                    <input class="form-check-input" type="checkbox" ${task.completed ? 'checked' : ''} 
+                        data-id="${task.id}" data-section="${section}">
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm border-0 bg-transparent" value="${task.name}" 
+                        data-id="${task.id}" data-field="name" data-section="${section}">
+                </td>
+                <td>
+                    ${personsHtml}
+                </td>
+                <td>
+                    <select class="form-select form-select-sm ${statusClass}" 
+                        data-id="${task.id}" data-field="status" data-section="${section}">
+                        <option value="tamamlandi" ${task.status === 'tamamlandi' ? 'selected' : ''}>Tamamlandı</option>
+                        <option value="yapiliyor" ${task.status === 'yapiliyor' ? 'selected' : ''}>Yapılıyor</option>
+                        <option value="uzerinde-dusuruluyor" ${task.status === 'uzerinde-dusuruluyor' ? 'selected' : ''}>Üzerinde Düşünülüyor</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="date" class="form-control form-control-sm border-0 bg-transparent" value="${task.startDate}" 
+                        data-id="${task.id}" data-field="startDate" data-section="${section}">
+                </td>
+                <td>
+                    <input type="date" class="form-control form-control-sm border-0 bg-transparent" value="${task.endDate || ''}" 
+                        data-id="${task.id}" data-field="endDate" data-section="${section}">
+                </td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary edit-task" data-id="${task.id}" data-section="${section}" title="Düzenle">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline-danger delete-task" data-id="${task.id}" data-section="${section}" title="Sil">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            return row;
+        }
+        
+        function getStatusText(status) {
+            switch(status) {
+                case 'tamamlandi': return 'Tamamlandı';
+                case 'yapiliyor': return 'Yapılıyor';
+                case 'uzerinde-dusuruluyor': return 'Üzerinde Düşünülüyor';
+                default: return status;
+            }
+        }
+        
+        function formatDateForDisplay(dateString) {
+            if (!dateString) return "";
+            
+            const date = new Date(dateString);
+            const options = { day: 'numeric', month: 'short' };
+            
+            return date.toLocaleDateString('tr-TR', options);
+        }
+        
+        function openAddTaskModal(section) {
+            document.getElementById('modalTaskId').value = '';
+            document.getElementById('modalTaskSection').value = section;
+            document.getElementById('modalTaskMode').value = 'add';
+            document.getElementById('modalTaskName').value = '';
+            document.getElementById('modalTaskStatus').value = 'uzerinde-dusuruluyor';
+            document.getElementById('modalTaskProject').value = '';
+            document.getElementById('selectedPersons').innerHTML = '';
+            document.getElementById('modalTaskDescription').value = '';
+            
+            const personsDropdown = document.getElementById('personsDropdown');
+            personsDropdown.innerHTML = '';
+            
+            Object.entries(userCredentials).forEach(([username, info]) => {
+                const item = document.createElement('li');
+                item.innerHTML = `
+                    <a class="dropdown-item" href="#" data-username="${username}">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar avatar-sm me-2" style="${info.profilePic ? `background-image: url(${info.profilePic});` : 'background-color: #6610f2;'}">${info.profilePic ? '' : info.initials}</div>
+                            <span>${info.displayName}</span>
+                        </div>
+                    </a>
+                `;
+                
+                item.querySelector('a').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    addPersonToTask(username);
+                });
+                
+                personsDropdown.appendChild(item);
+            });
+            
+            addPersonToTask(currentUser);
+            
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('modalTaskStartDate').value = today;
+            document.getElementById('modalTaskEndDate').value = '';
+            
+            document.getElementById('taskModalLabel').textContent = 'Yeni Görev Ekle';
+            
+            taskModal.show();
+        }
+        
+        function addPersonToTask(username) {
+            const selectedPersons = document.getElementById('selectedPersons');
+            const userInfo = userCredentials[username];
+            
+            if (selectedPersons.querySelector(`[data-username="${username}"]`)) {
+                return;
+            }
+            
+            const personCard = document.createElement('div');
+            personCard.className = 'bg-light rounded-pill py-1 px-3 me-2 mb-2 d-flex align-items-center';
+            personCard.setAttribute('data-username', username);
+            
+            personCard.innerHTML = `
+                <div class="avatar avatar-sm me-2" style="${userInfo.profilePic ? `background-image: url(${userInfo.profilePic});` : 'background-color: #6610f2;'}">${userInfo.profilePic ? '' : userInfo.initials}</div>
+                <span class="me-2">${userInfo.displayName}</span>
+                <button type="button" class="btn-close btn-close-sm remove-person" data-username="${username}"></button>
+            `;
+            
+            personCard.querySelector('.remove-person').addEventListener('click', function() {
+                personCard.remove();
+            });
+            
+            selectedPersons.appendChild(personCard);
+        }
+        
+        function openEditTaskModal(id, section) {
+            const tasks = section === 'initial' ? initialTasks : laterTasks;
+            const task = tasks.find(t => t.id === parseInt(id));
+            
+            if (!task) return;
+            
+            document.getElementById('modalTaskId').value = task.id;
+            document.getElementById('modalTaskSection').value = section;
+            document.getElementById('modalTaskMode').value = 'edit';
+            document.getElementById('modalTaskName').value = task.name;
+            document.getElementById('modalTaskStatus').value = task.status;
+            document.getElementById('modalTaskProject').value = task.project || '';
+            document.getElementById('modalTaskStartDate').value = task.startDate;
+            document.getElementById('modalTaskEndDate').value = task.endDate || '';
+            document.getElementById('modalTaskDescription').value = task.description || '';
+            
+            document.getElementById('selectedPersons').innerHTML = '';
+            
+            const personsDropdown = document.getElementById('personsDropdown');
+            personsDropdown.innerHTML = '';
+            
+            Object.entries(userCredentials).forEach(([username, info]) => {
+                const item = document.createElement('li');
+                item.innerHTML = `
+                    <a class="dropdown-item" href="#" data-username="${username}">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar avatar-sm me-2" style="${info.profilePic ? `background-image: url(${info.profilePic});` : 'background-color: #6610f2;'}">${info.profilePic ? '' : info.initials}</div>
+                            <span>${info.displayName}</span>
+                        </div>
+                    </a>
+                `;
+                
+                item.querySelector('a').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    addPersonToTask(username);
+                });
+                
+                personsDropdown.appendChild(item);
+            });
+            
+            task.persons.forEach(person => {
+                addPersonToTask(person);
+            });
+            
+            document.getElementById('taskModalLabel').textContent = 'Görevi Düzenle';
+            
+            taskModal.show();
+        }
+        
+        function openSectionTitleModal(section) {
+            document.getElementById('sectionTitleInput').value = sectionTitles[section] || '';
+            document.getElementById('sectionId').value = section;
+            sectionTitleModalObj.show();
+        }
+        
+        function saveSectionTitle() {
+            const section = document.getElementById('sectionId').value;
+            const title = document.getElementById('sectionTitleInput').value;
+            
+            if (title.trim() === '') {
+                alert("Lütfen bir başlık girin.");
+                return;
+            }
+            
+            sectionTitles[section] = title;
+            renderSectionTitles();
+            
+            saveAllChanges();
+            
+            sectionTitleModalObj.hide();
+            
+            logActivity(`"${section}" bölümünün başlığı "${title}" olarak değiştirildi.`);
+        }
+        
+        function openProjectModal(id) {
+            if (id) {
+                const project = projects.find(p => p.id === id);
+                
+                if (project) {
+                    document.getElementById('projectId').value = project.id;
+                    document.getElementById('projectMode').value = 'edit';
+                    document.getElementById('projectName').value = project.name;
+                    document.getElementById('projectDescription').value = project.description || '';
+                    document.getElementById('projectStartDate').value = project.startDate || '';
+                    document.getElementById('projectEndDate').value = project.endDate || '';
+                    document.getElementById('projectManager').value = project.manager || '';
+                    
+                    document.getElementById('projectModalLabel').textContent = 'Projeyi Düzenle';
+                }
+            } else {
+                document.getElementById('projectId').value = '';
+                document.getElementById('projectMode').value = 'add';
+                document.getElementById('projectName').value = '';
+                document.getElementById('projectDescription').value = '';
+                document.getElementById('projectManager').value = currentUser;
+                
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('projectStartDate').value = today;
+                document.getElementById('projectEndDate').value = '';
+                
+                document.getElementById('projectModalLabel').textContent = 'Yeni Proje Ekle';
+            }
+            
+            projectModalObj.show();
+        }
+        
+        function saveProject() {
+            const id = document.getElementById('projectId').value;
+            const mode = document.getElementById('projectMode').value;
+            const name = document.getElementById('projectName').value;
+            const description = document.getElementById('projectDescription').value;
+            const startDate = document.getElementById('projectStartDate').value;
+            const endDate = document.getElementById('projectEndDate').value;
+            const manager = document.getElementById('projectManager').value;
+            
+            if (!name) {
+                alert('Lütfen proje adını girin.');
+                return;
+            }
+            
+            if (!startDate) {
+                alert('Lütfen başlama tarihini girin.');
+                return;
+            }
+            
+            if (mode === 'add') {
+                const projectId = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                
+                const colors = ['primary', 'success', 'warning', 'danger', 'info', 'purple'];
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                const newProject = {
+                    id: projectId,
+                    name,
+                    description,
+                    startDate,
+                    endDate,
+                    manager,
+                    color: randomColor
+                };
+                
+                projects.push(newProject);
+                
+                logActivity(`"${name}" projesi eklendi.`);
+            } else {
+                const projectIndex = projects.findIndex(p => p.id === id);
+                
+                if (projectIndex !== -1) {
+                    projects[projectIndex].name = name;
+                    projects[projectIndex].description = description;
+                    projects[projectIndex].startDate = startDate;
+                    projects[projectIndex].endDate = endDate;
+                    projects[projectIndex].manager = manager;
+                    
+                    logActivity(`"${name}" projesi güncellendi.`);
+                }
+            }
+            
+            renderProjects();
+            
+            saveAllChanges();
+            
+            projectModalObj.hide();
+        }
+        
+        function openEventModal(id) {
+            if (id) {
+                const event = events.find(e => e.id === parseInt(id));
+                
+                if (event) {
+                    document.getElementById('eventId').value = event.id;
+                    document.getElementById('eventMode').value = 'edit';
+                    document.getElementById('eventTitle').value = event.title;
+                    document.getElementById('eventDescription').value = event.description || '';
+                    document.getElementById('eventDate').value = event.date || '';
+                    document.getElementById('eventTime').value = event.time || '';
+                    document.getElementById('eventColor').value = event.color || 'primary';
+                    document.getElementById('eventProject').value = event.project || '';
+                    
+                    document.getElementById('eventModalLabel').textContent = 'Etkinliği Düzenle';
+                }
+            } else {
+                document.getElementById('eventId').value = '';
+                document.getElementById('eventMode').value = 'add';
+                document.getElementById('eventTitle').value = '';
+                document.getElementById('eventDescription').value = '';
+                document.getElementById('eventColor').value = 'primary';
+                document.getElementById('eventProject').value = '';
+                
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('eventDate').value = today;
+                document.getElementById('eventTime').value = '10:00';
+                
+                document.getElementById('eventModalLabel').textContent = 'Yeni Etkinlik Ekle';
+            }
+            
+            eventModalObj.show();
+        }
+        
+        function saveEvent() {
+            const id = document.getElementById('eventId').value;
+            const mode = document.getElementById('eventMode').value;
+            const title = document.getElementById('eventTitle').value;
+            const description = document.getElementById('eventDescription').value;
+            const date = document.getElementById('eventDate').value;
+            const time = document.getElementById('eventTime').value;
+            const color = document.getElementById('eventColor').value;
+            const project = document.getElementById('eventProject').value;
+            
+            if (!title) {
+                alert('Lütfen etkinlik başlığını girin.');
+                return;
+            }
+            
+            if (!date) {
+                alert('Lütfen tarih girin.');
+                return;
+            }
+            
+            if (mode === 'add') {
+               
+                const newId = events.length > 0 ? Math.max(...events.map(e => e.id)) + 1 : 1;
+                
+                const newEvent = {
+                    id: newId,
+                    title,
+                    description,
+                    date,
+                    time,
+                    color,
+                    project
+                };
+                
+                events.push(newEvent);
+                
+                logActivity(`"${title}" etkinliği eklendi.`);
+            } else {
+                const eventIndex = events.findIndex(e => e.id === parseInt(id));
+                
+                if (eventIndex !== -1) {
+                    events[eventIndex].title = title;
+                    events[eventIndex].description = description;
+                    events[eventIndex].date = date;
+                    events[eventIndex].time = time;
+                    events[eventIndex].color = color;
+                    events[eventIndex].project = project;
+                    
+                    logActivity(`"${title}" etkinliği güncellendi.`);
+                }
+            }
+            
+            renderEvents();
+            renderCalendar();
+            
+            saveAllChanges();
+            
+            eventModalObj.hide();
+        }
+        
+        function openMemberModal(username) {
+            if (username) {
+                const userInfo = userCredentials[username];
+                
+                if (userInfo) {
+                    document.getElementById('memberId').value = username;
+                    document.getElementById('memberMode').value = 'edit';
+                    document.getElementById('memberName').value = userInfo.displayName;
+                    document.getElementById('memberUsername').value = username;
+                    document.getElementById('memberUsername').disabled = true;
+                    document.getElementById('memberPassword').value = '';
+                    document.getElementById('memberPassword').placeholder = '******** (değiştirmek için girin)';
+                    document.getElementById('memberInitials').value = userInfo.initials;
+                    document.getElementById('memberRole').value = userInfo.role || 'developer';
+                    
+                    document.getElementById('memberModalLabel').textContent = 'Üyeyi Düzenle';
+                }
+            } else {
+                document.getElementById('memberId').value = '';
+                document.getElementById('memberMode').value = 'add';
+                document.getElementById('memberName').value = '';
+                document.getElementById('memberUsername').value = '';
+                document.getElementById('memberUsername').disabled = false;
+                document.getElementById('memberPassword').value = '';
+                document.getElementById('memberPassword').placeholder = 'Şifre girin';
+                document.getElementById('memberInitials').value = '';
+                document.getElementById('memberRole').value = 'developer';
+                
+                document.getElementById('memberModalLabel').textContent = 'Yeni Üye Ekle';
+            }
+            
+            memberModalObj.show();
+        }
+        
+        function saveMember() {
+            const id = document.getElementById('memberId').value;
+            const mode = document.getElementById('memberMode').value;
+            const name = document.getElementById('memberName').value;
+            const username = document.getElementById('memberUsername').value;
+            const password = document.getElementById('memberPassword').value;
+            const initials = document.getElementById('memberInitials').value;
+            const role = document.getElementById('memberRole').value;
+            
+            if (!name) {
+                alert('Lütfen ad soyad girin.');
+                return;
+            }
+            
+            if (!username) {
+                alert('Lütfen kullanıcı adı girin.');
+                return;
+            }
+            
+            if (mode === 'add' && !password) {
+                alert('Lütfen şifre girin.');
+                return;
+            }
+            
+            if (!initials) {
+                alert('Lütfen baş harfleri girin.');
+                return;
+            }
+            
+            if (mode === 'add') {
+                if (userCredentials[username]) {
+                    alert('Bu kullanıcı adı zaten alınmış.');
+                    return;
+                }
+                
+                userCredentials[username] = {
+                    displayName: name,
+                    password: password,
+                    initials: initials.toUpperCase(),
+                    role: role,
+                    email: `${username}@inalsoft.com`,
+                    bio: ""
+                };
+                
+                logActivity(`"${name}" üyesi eklendi.`);
+            } else {
+                if (userCredentials[id]) {
+                    userCredentials[id].displayName = name;
+                    userCredentials[id].initials = initials.toUpperCase();
+                    userCredentials[id].role = role;
+                    
+                    if (password) {
+                        userCredentials[id].password = password;
+                    }
+                    
+                    logActivity(`"${name}" üyesi güncellendi.`);
+                }
+            }
+            
+            renderTeam();
+            
+            saveAllChanges();
+            
+            memberModalObj.hide();
+        }
+        
+        function saveTask() {
+            const id = document.getElementById('modalTaskId').value;
+            const section = document.getElementById('modalTaskSection').value;
+            const mode = document.getElementById('modalTaskMode').value;
+            const name = document.getElementById('modalTaskName').value;
+            const status = document.getElementById('modalTaskStatus').value;
+            const project = document.getElementById('modalTaskProject').value;
+            const startDate = document.getElementById('modalTaskStartDate').value;
+            const endDate = document.getElementById('modalTaskEndDate').value;
+            const description = document.getElementById('modalTaskDescription').value;
+            
+            const selectedPersons = [];
+            document.querySelectorAll('#selectedPersons [data-username]').forEach(el => {
+                selectedPersons.push(el.getAttribute('data-username'));
+            });
+            
+            if (!name) {
+                alert('Lütfen görev adını girin.');
+                return;
+            }
+            
+            if (!startDate) {
+                alert('Lütfen başlama tarihini girin.');
+                return;
+            }
+            
+            if (selectedPersons.length === 0) {
+                alert('Lütfen en az bir kişi seçin.');
+                return;
+            }
+            
+            if (mode === 'add') {
+                const tasks = section === 'initial' ? initialTasks : laterTasks;
+                
+                const allTasks = [...initialTasks, ...laterTasks];
+                const newId = allTasks.length > 0 ? Math.max(...allTasks.map(t => t.id)) + 1 : 1;
+                
+                const newTask = {
+                    id: newId,
+                    name,
+                    persons: selectedPersons,
+                    status,
+                    project,
+                    startDate,
+                    endDate,
+                    description,
+                    completed: status === 'tamamlandi'
+                };
+                
+                tasks.push(newTask);
+                
+                logActivity(`"${name}" görevi eklendi.`);
+            } else {
+                const tasks = section === 'initial' ? initialTasks : laterTasks;
+                const task = tasks.find(t => t.id === parseInt(id));
+                
+                if (task) {
+                    task.name = name;
+                    task.persons = selectedPersons;
+                    task.status = status;
+                    task.project = project;
+                    task.startDate = startDate;
+                    task.endDate = endDate;
+                    task.description = description;
+                    task.completed = status === 'tamamlandi';
+                    
+                    logActivity(`"${name}" görevi güncellendi.`);
+                }
+            }
+            
+            renderTasks();
+            renderDashboard();
+            
+            saveAllChanges();
+            
+            taskModal.hide();
+        }
+        
+        function deleteTask(id, section) {
+            const tasks = section === 'initial' ? initialTasks : laterTasks;
+            const index = tasks.findIndex(t => t.id === parseInt(id));
+            
+            if (index !== -1) {
+                const taskName = tasks[index].name;
+                
+                if (confirm(`"${taskName}" görevini silmek istediğinize emin misiniz?`)) {
+                    tasks.splice(index, 1);
+                    
+                    renderTasks();
+                    renderDashboard();
+                    
+                    saveAllChanges();
+                    
+                    logActivity(`"${taskName}" görevi silindi.`);
+                }
+            }
+        }
+        
+        function saveProfile() {
+            if (!currentUser) return;
+            
+            const fullName = document.getElementById('profileFullName').value;
+            const initials = document.getElementById('profileInitials').value;
+            const email = document.getElementById('profileEmail').value;
+            const bio = document.getElementById('profileBio').value;
+            
+            if (!fullName) {
+                alert('Lütfen ad soyad girin.');
+                return;
+            }
+            
+            if (!initials) {
+                alert('Lütfen baş harfleri girin.');
+                return;
+            }
+            
+            userCredentials[currentUser].displayName = fullName;
+            userCredentials[currentUser].initials = initials.toUpperCase();
+            userCredentials[currentUser].email = email;
+            userCredentials[currentUser].bio = bio;
+            
+            const selectedAvatar = document.querySelector('.avatar-option.selected');
+            if (selectedAvatar) {
+                const avatarUrl = selectedAvatar.getAttribute('data-avatar-url');
+                userCredentials[currentUser].profilePic = avatarUrl;
+                
+                userAvatar.innerHTML = '';
+                userAvatar.style.backgroundImage = `url(${avatarUrl})`;
+                userAvatar.style.backgroundColor = 'transparent';
+            }
+            
+            currentUserName.textContent = fullName;
+            
+            saveAllChanges();
+            
+            alert('Profil bilgileri güncellendi.');
+            
+            logActivity('Profil bilgileri güncellendi.');
+        }
+        
+        function handleAvatarUpload(e) {
+            const file = e.target.files[0];
+            
+            if (file) {
+                if (!file.type.startsWith('image/')) {
+                    alert('Lütfen bir resim dosyası seçin.');
+                    return;
+                }
+                
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('Dosya boyutu 2MB\'dan küçük olmalıdır.');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const imageUrl = e.target.result;
+                    
+                    profileAvatar.innerHTML = '';
+                    profileAvatar.style.backgroundImage = `url(${imageUrl})`;
+                    profileAvatar.style.backgroundColor = 'transparent';
+                    
+                    document.querySelectorAll('.avatar-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    userCredentials[currentUser].profilePic = imageUrl;
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        function saveSettings() {
+            const appTitle = document.getElementById('appTitle').value;
+            const defaultLanguage = document.getElementById('defaultLanguage').value;
+            const dateFormat = document.getElementById('dateFormat').value;
+            const darkMode = document.getElementById('darkModeSwitch').checked;
+            
+            userSettings.appTitle = appTitle;
+            userSettings.language = defaultLanguage;
+            userSettings.dateFormat = dateFormat;
+            userSettings.darkMode = darkMode;
+            
+            saveAllChanges();
+            
+            document.title = appTitle;
+            document.querySelectorAll('.navbar-brand').forEach(el => {
+                el.textContent = appTitle;
+            });
+            
+            if (darkMode) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+            
+            alert('Ayarlar güncellendi.');
+            
+            logActivity('Uygulama ayarları güncellendi.');
+        }
+        
+        function applyFilters() {
+            const statusFilters = Array.from(document.querySelectorAll('.filter-status:checked')).map(cb => cb.value);
+            
+            const personFilters = Array.from(document.querySelectorAll('.filter-person:checked')).map(cb => cb.value);
+            
+            document.querySelectorAll('#initialTasksContainer tr, #laterTasksContainer tr').forEach(row => {
+                const taskId = row.getAttribute('data-id');
+                if (!taskId) return;
+                
+                const task = [...initialTasks, ...laterTasks].find(t => t.id === parseInt(taskId));
+                if (!task) return;
+                
+                const statusMatch = statusFilters.includes(task.status);
+                
+                const personMatch = task.persons.some(person => personFilters.includes(person));
+                
+                if (statusMatch && personMatch) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            logActivity('Filtreler uygulandı.');
+        }
+        
+        function resetFilters() {
+            document.querySelectorAll('.filter-status, .filter-person').forEach(cb => {
+                cb.checked = true;
+            });
+            
+            document.querySelectorAll('#initialTasksContainer tr, #laterTasksContainer tr').forEach(row => {
+                row.style.display = '';
+            });
+            
+            logActivity('Filtreler sıfırlandı.');
+        }
+        
+        function saveAllChanges() {
+            const dataRef = database.ref('inalsoft');
+            
+            dataRef.set({
+                tasks: {
+                    initialTasks,
+                    laterTasks
+                },
+                projects,
+                events,
+                sectionTitles,
+                userSettings,
+                userCredentials,
+                lastUpdate: {
+                    user: userCredentials[currentUser].displayName,
+                    timestamp: new Date().toISOString()
+                }
+            }, error => {
+                if (error) {
+                    console.error("Kaydetme hatası:", error);
+                    logActivity(`Kaydetme hatası: ${error.message}`);
+                } else {
+                    logActivity("Tüm değişiklikler kaydedildi.");
+                }
+            });
+            
+            updateDashboardStats();
+        }
+        
+        function attachEventListeners() {
+            document.querySelectorAll('.edit-task').forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const section = this.getAttribute('data-section');
+                    openEditTaskModal(id, section);
+                });
+            });
+            
+            document.querySelectorAll('.delete-task').forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const section = this.getAttribute('data-section');
+                    deleteTask(id, section);
+                });
+            });
+            
+            document.querySelectorAll('.form-check-input[data-id]').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    const section = this.getAttribute('data-section');
+                    const isChecked = this.checked;
+                    
+                    updateTaskCompletion(id, section, isChecked);
+                });
+            });
+            
+            document.querySelectorAll('select[data-field="status"]').forEach(select => {
+                select.addEventListener('change', function() {
+                    this.className = `form-select form-select-sm status-badge status-${this.value}`;
+                    
+                    const id = parseInt(this.getAttribute('data-id'));
+                    const section = this.getAttribute('data-section');
+                    const tasks = section === 'initial' ? initialTasks : laterTasks;
+                    const task = tasks.find(t => t.id === id);
+                    
+                    if (task) {
+                        task.status = this.value;
+                        
+                        if (this.value === 'tamamlandi') {
+                            task.completed = true;
+                            const checkbox = document.querySelector(`.form-check-input[data-id="${id}"][data-section="${section}"]`);
+                            if (checkbox) checkbox.checked = true;
+                        }
+                        
+                        saveAllChanges();
+                    }
+                });
+            });
+            
+            document.querySelectorAll('input[data-field]').forEach(input => {
+                input.addEventListener('change', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    const field = this.getAttribute('data-field');
+                    const section = this.getAttribute('data-section');
+                    const value = this.value;
+                    
+                    updateTaskField(id, section, field, value);
+                });
+            });
+            
+            document.querySelectorAll('#projectsMenu .nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const projectId = this.getAttribute('data-project-id');
+                    
+                    changePage('tasks');
+                    
+                    setTimeout(() => {
+                        filterTasksByProject(projectId);
+                    }, 100);
+                });
+            });
+            
+            document.querySelectorAll('.calendar-event').forEach(eventEl => {
+                eventEl.addEventListener('click', function() {
+                    const eventId = parseInt(this.getAttribute('data-event-id'));
+                    openEventModal(eventId);
+                });
+            });
+        }
+        
+        function filterTasksByProject(projectId) {
+            resetFilters();
+            
+            document.querySelectorAll('#initialTasksContainer tr, #laterTasksContainer tr').forEach(row => {
+                const taskId = row.getAttribute('data-id');
+                if (!taskId) return;
+                
+                const task = [...initialTasks, ...laterTasks].find(t => t.id === parseInt(taskId));
+                if (!task) return;
+                
+                if (task.project === projectId) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            const project = projects.find(p => p.id === projectId);
+            logActivity(`"${project ? project.name : projectId}" projesine ait görevler filtrelendi.`);
+        }
+        
+        function updateTaskCompletion(id, section, isCompleted) {
+            const tasks = section === 'initial' ? initialTasks : laterTasks;
+            const task = tasks.find(t => t.id === id);
+            
+            if (task) {
+                task.completed = isCompleted;
+                
+                if (isCompleted && task.status !== 'tamamlandi') {
+                    task.status = 'tamamlandi';
+                    
+                    const select = document.querySelector(`select[data-id="${id}"][data-section="${section}"]`);
+                    if (select) {
+                        select.value = 'tamamlandi';
+                        select.className = 'form-select form-select-sm status-badge status-tamamlandi';
+                    }
+                }
+                
+                if (!isCompleted && task.status === 'tamamlandi') {
+                    task.status = 'yapiliyor';
+                    
+                    const select = document.querySelector(`select[data-id="${id}"][data-section="${section}"]`);
+                    if (select) {
+                        select.value = 'yapiliyor';
+                        select.className = 'form-select form-select-sm status-badge status-yapiliyor';
+                    }
+                }
+                
+                saveAllChanges();
+                
+                logActivity(`"${task.name}" görevi ${isCompleted ? 'tamamlandı' : 'devam ediyor'} olarak işaretlendi.`);
+            }
+        }
+        
+        function updateTaskField(id, section, field, value) {
+            const tasks = section === 'initial' ? initialTasks : laterTasks;
+            const task = tasks.find(t => t.id === id);
+            
+            if (task) {
+                task[field] = value;
+                
+                saveAllChanges();
+                
+                logActivity(`"${task.name}" görevinin ${field} alanı güncellendi.`);
+            }
+        }
+        
+        function logActivity(message) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = 'list-group-item py-2 px-3 small';
+            logEntry.innerHTML = `<span class="text-muted">[${timeStr}]</span> ${message}`;
+            
+            logContainer.insertBefore(logEntry, logContainer.firstChild);
+        }
+        
+        function trackOnlineUser() {
+            const onlineRef = database.ref('.info/connected');
+            
+            onlineRef.on('value', snapshot => {
+                if (snapshot.val() === true && currentUser) {
+                    userRef = database.ref(`online/${currentUser}`);
+                    
+                    userRef.onDisconnect().remove();
+                    
+                    userRef.set({
+                        displayName: userCredentials[currentUser].displayName,
+                        lastActive: new Date().toISOString()
+                    });
+                }
+            });
+            
+            const onlineUsersRef = database.ref('online');
+            
+            onlineUsersRef.on('value', snapshot => {
+                const data = snapshot.val();
+                const count = data ? Object.keys(data).length : 0;
+                
+                onlineCount.innerHTML = `<span class="online-indicator"></span> Çevrimiçi: ${count}`;
+            });
+        }
+        
+        document.getElementById('changePasswordBtn').addEventListener('click', function() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                alert('Lütfen tüm alanları doldurun.');
+                return;
+            }
+            
+            if (userCredentials[currentUser].password !== currentPassword) {
+                alert('Mevcut şifre yanlış.');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                alert('Yeni şifreler eşleşmiyor.');
+                return;
+            }
+            
+            userCredentials[currentUser].password = newPassword;
+            
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            
+            saveAllChanges();
+            
+            alert('Şifreniz başarıyla değiştirildi.');
+            logActivity('Şifre değiştirildi.');
+        });
+        
+        document.getElementById('exportDataBtn').addEventListener('click', function() {
+            const data = {
+                tasks: {
+                    initialTasks,
+                    laterTasks
+                },
+                projects,
+                events,
+                sectionTitles,
+                userSettings
+            };
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `inalsoft_backup_${new Date().toISOString().slice(0, 10)}.json`);
+            a.click();
+            
+            logActivity('Veriler dışa aktarıldı.');
+        });
+        
+        document.getElementById('clearDataBtn').addEventListener('click', function() {
+            if (confirm('Tüm verileri temizlemek istediğinize emin misiniz? Bu işlem geri alınamaz!')) {
+                initialTasks = [];
+                laterTasks = [];
+                projects = [];
+                events = [];
+                
+                renderAll();
+                
+                saveAllChanges();
+                
+                alert('Tüm veriler temizlendi.');
+                logActivity('Tüm veriler temizlendi.');
+            }
+        });
+        
+        document.getElementById('darkModeSwitch').addEventListener('change', function() {
+            const isDarkMode = this.checked;
+            
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+            
+            userSettings.darkMode = isDarkMode;
+            saveAllChanges();
+        });
+        
+        window.onload = function() {
+            const avatarSelector = document.getElementById('avatarSelector');
+            if (avatarSelector) {
+                defaultAvatars.forEach((url) => {
+                    const option = document.createElement('div');
+                    option.className = 'avatar-option';
+                    option.style.backgroundImage = `url(${url})`;
+                    option.style.backgroundSize = 'cover';
+                    option.setAttribute('data-avatar-url', url);
+                    
+                    option.addEventListener('click', function() {
+                        document.querySelectorAll('.avatar-option').forEach(opt => {
+                            opt.classList.remove('selected');
+                        });
+                        
+                        this.classList.add('selected');
+                        
+                        document.getElementById('profileAvatar').style.backgroundImage = `url(${url})`;
+                        document.getElementById('profileAvatar').innerHTML = '';
+                    });
+                    
+                    avatarSelector.appendChild(option);
+                });
+            }
+            
+            window.addEventListener('error', function(e) {
+                console.error('Global error:', e.message);
+                logActivity(`Hata: ${e.message}`);
+            });
+        };
+        
+        function openProjectTasks(projectId) {
+            changePage('tasks');
+            
+            setTimeout(() => {
+                filterTasksByProject(projectId);
+            }, 200);
+        }
+        
+        document.addEventListener('click', function(e) {
+            const target = e.target;
+            
+            if (target.closest('[data-project-id]')) {
+                e.preventDefault();
+                const projectId = target.closest('[data-project-id]').getAttribute('data-project-id');
+                openProjectTasks(projectId);
+            }
+            
+            if (target.closest('[data-event-id]')) {
+                const eventId = parseInt(target.closest('[data-event-id]').getAttribute('data-event-id'));
+                openEventModal(eventId);
+            }
+        });
+        
+        const currentDate = new Date();
+        function updateCalendarTitle() {
+            if (calendarTitle) {
+                const monthName = currentDate.toLocaleString('tr-TR', { month: 'long' });
+                const year = currentDate.getFullYear();
+                calendarTitle.textContent = `${monthName} ${year}`;
+            }
+        }
+        
+        if (prevMonthBtn) {
+            prevMonthBtn.addEventListener('click', function() {
+                currentDate.setMonth(currentDate.getMonth() - 1);
+                updateCalendarTitle();
+                renderCalendar();
+            });
+        }
+        
+        if (nextMonthBtn) {
+            nextMonthBtn.addEventListener('click', function() {
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                updateCalendarTitle();
+                renderCalendar();
+            });
+        }
+        
+        document.getElementById('selectAllInitial')?.addEventListener('change', function() {
+            const isChecked = this.checked;
+            document.querySelectorAll('#initialTasksContainer .form-check-input').forEach(checkbox => {
+                checkbox.checked = isChecked;
+                
+                if (checkbox.hasAttribute('data-id')) {
+                    const id = parseInt(checkbox.getAttribute('data-id'));
+                    const section = checkbox.getAttribute('data-section');
+                    updateTaskCompletion(id, section, isChecked);
+                }
+            });
+        });
+        
+        document.getElementById('selectAllLater')?.addEventListener('change', function() {
+            const isChecked = this.checked;
+            document.querySelectorAll('#laterTasksContainer .form-check-input').forEach(checkbox => {
+                checkbox.checked = isChecked;
+                
+                if (checkbox.hasAttribute('data-id')) {
+                    const id = parseInt(checkbox.getAttribute('data-id'));
+                    const section = checkbox.getAttribute('data-section');
+                    updateTaskCompletion(id, section, isChecked);
+                }
+            });
+        });
+        
+        function searchTasks(query) {
+            if (!query) {
+                document.querySelectorAll('#initialTasksContainer tr, #laterTasksContainer tr').forEach(row => {
+                    row.style.display = '';
+                });
+                return;
+            }
+            
+            query = query.toLowerCase();
+            
+            document.querySelectorAll('#initialTasksContainer tr, #laterTasksContainer tr').forEach(row => {
+                const taskId = row.getAttribute('data-id');
+                if (!taskId) return;
+                
+                const task = [...initialTasks, ...laterTasks].find(t => t.id === parseInt(taskId));
+                if (!task) return;
+                
+                const nameMatch = task.name.toLowerCase().includes(query);
+                const descMatch = task.description && task.description.toLowerCase().includes(query);
+                
+                if (nameMatch || descMatch) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        const searchInput = document.createElement('input');
+        searchInput.type = 'search';
+        searchInput.className = 'form-control form-control-sm';
+        searchInput.placeholder = 'Görev ara...';
+        searchInput.style.width = '200px';
+        
+        const toolbar = document.querySelector('.btn-toolbar');
+        if (toolbar) {
+            const searchWrapper = document.createElement('div');
+            searchWrapper.className = 'ms-2';
+            searchWrapper.appendChild(searchInput);
+            toolbar.appendChild(searchWrapper);
+            
+            searchInput.addEventListener('input', function() {
+                searchTasks(this.value);
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
