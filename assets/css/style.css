@@ -1,0 +1,589 @@
+/* assets/css/style.css - Modernize edilmiş stil dosyası - Kırmızı, Siyah, Beyaz renk paleti */
+
+:root {
+    /* Temel renk paleti */
+    --primary-color: #e03131;        /* Parlak kırmızı */
+    --primary-hover: #c92a2a;        /* Koyu kırmızı */
+    --secondary-color: #222222;      /* Derin siyah */
+    --secondary-hover: #121212;      /* Koyu siyah */
+    --light-color: #ffffff;          /* Beyaz */
+    --light-hover: #f1f3f5;          /* Açık gri */
+    
+    /* Açık tema renkleri */
+    --bg-color-light: #f8f9fa;
+    --text-color-light: #222222;
+    --card-bg-light: #FFFFFF;
+    --card-border-light: rgba(0, 0, 0, 0.08);
+    --sidebar-bg-light: #FFFFFF;
+    --sidebar-border-light: #e9ecef;
+    --input-bg-light: #FFFFFF;
+    --input-border-light: #dee2e6;
+    
+    /* Koyu tema renkleri */
+    --bg-color-dark: #171717;
+    --text-color-dark: #f8f9fa;
+    --card-bg-dark: #222222;
+    --card-border-dark: rgba(255, 255, 255, 0.05);
+    --sidebar-bg-dark: #171717;
+    --sidebar-border-dark: #333333;
+    --input-bg-dark: #333333;
+    --input-border-dark: #444444;
+    
+    /* Durum renkleri */
+    --success-color: #40c057;
+    --info-color: #339af0;
+    --warning-color: #f59f00;
+    --danger-color: #e03131;
+}
+
+/* Bootstrap temasını özelleştirme */
+[data-bs-theme=light] {
+    --bs-primary: var(--primary-color);
+    --bs-primary-rgb: 224, 49, 49;
+    --bs-secondary: var(--secondary-color);
+    --bs-secondary-rgb: 34, 34, 34;
+    --bs-body-bg: var(--bg-color-light);
+    --bs-body-color: var(--text-color-light);
+    --bs-border-color: var(--card-border-light);
+    --bs-card-bg: var(--card-bg-light);
+    --bs-input-bg: var(--input-bg-light);
+}
+
+[data-bs-theme=dark] {
+    --bs-primary: var(--primary-color);
+    --bs-primary-rgb: 224, 49, 49;
+    --bs-secondary: var(--secondary-color);
+    --bs-secondary-rgb: 34, 34, 34;
+    --bs-body-bg: var(--bg-color-dark);
+    --bs-body-color: var(--text-color-dark);
+    --bs-border-color: var(--card-border-dark);
+    --bs-card-bg: var(--card-bg-dark);
+    --bs-input-bg: var(--input-bg-dark);
+}
+
+/* Genel stil ayarları */
+body {
+    font-family: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    min-height: 100vh;
+    letter-spacing: 0.015rem;
+    line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+/* Buton stilleri */
+.btn {
+    border-radius: 0.375rem;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+    background-color: var(--primary-hover) !important;
+    border-color: var(--primary-hover) !important;
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-outline-primary:hover, .btn-outline-primary:focus, .btn-outline-primary:active {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+.btn-secondary:hover, .btn-secondary:focus, .btn-secondary:active {
+    background-color: var(--secondary-hover) !important;
+    border-color: var(--secondary-hover) !important;
+}
+
+/* Ana içerik alanı */
+main {
+    padding: 1.5rem 1.25rem 3rem;
+    width: 100%;
+    min-height: calc(100vh - 56px); /* Tam ekran yüksekliği eksi navbar yüksekliği */
+}
+
+/* Kartlar */
+.card {
+    border-radius: 0.5rem;
+    border: 1px solid var(--bs-border-color);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-bottom: 1.5rem;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+    font-weight: 600;
+    padding: 1rem 1.25rem;
+    background-color: transparent;
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+.card-footer {
+    padding: 1rem 1.25rem;
+    background-color: transparent;
+    border-top: 1px solid var(--bs-border-color);
+}
+
+/* Navbar stil - Sticky */
+.navbar {
+    padding: 0.75rem 1rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    z-index: 1030;
+    position: sticky;
+    top: 0;
+    width: 100%;
+}
+
+.navbar-dark {
+    background-color: var(--secondary-color);
+}
+
+.navbar-light {
+    background-color: white;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.25rem;
+    padding: 0;
+}
+
+.navbar-brand img {
+    height: 35px;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+/* Bildirim simgesi */
+.notification-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0.25rem 0.45rem;
+    min-width: 1.5rem;
+    min-height: 1.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    border-radius: 50%;
+    background-color: var(--danger-color);
+    color: white;
+    transform: translate(30%, -30%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Bildirim listesi */
+.notification-dropdown {
+    min-width: 320px;
+    padding: 0;
+}
+
+.notification-list {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.notification-item {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--bs-border-color);
+    transition: background-color 0.2s ease;
+}
+
+.notification-item:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.375rem;
+}
+
+.notification-header i {
+    margin-right: 0.5rem;
+    font-size: 1rem;
+    color: var(--primary-color);
+}
+
+.notification-title {
+    font-weight: 600;
+    flex-grow: 1;
+}
+
+.notification-time {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.notification-body {
+    font-size: 0.875rem;
+    margin-bottom: 0.625rem;
+    color: var(--bs-body-color);
+}
+
+.notification-footer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Sidebar stil */
+.sidebar {
+    position: fixed;
+    top: 56px; /* Navbar yüksekliği */
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    padding: 20px 0 0;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+    transition: transform 0.3s ease, width 0.3s ease;
+    width: 240px; /* Biraz daha geniş sidebar */
+}
+
+.sidebar-sticky {
+    position: relative;
+    top: 0;
+    height: calc(100vh - 56px);
+    padding-top: 0.5rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+.sidebar .nav-link {
+    font-weight: 500;
+    padding: 0.75rem 1.25rem;
+    color: var(--bs-body-color);
+    border-left: 3px solid transparent;
+    transition: color 0.2s ease, background-color 0.2s ease, border-left-color 0.2s ease;
+    margin-bottom: 0.25rem;
+}
+
+.sidebar .nav-link:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.08);
+}
+
+.sidebar .nav-link.active {
+    color: var(--primary-color);
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+    border-left: 3px solid var(--primary-color);
+    font-weight: 600;
+}
+
+.sidebar .nav-link i {
+    margin-right: 0.75rem;
+    width: 20px;
+    text-align: center;
+    font-size: 1rem;
+}
+
+.sidebar-heading {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    padding: 1.5rem 1.25rem 0.5rem;
+    font-weight: 700;
+}
+
+/* Takvim stil */
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: rgba(var(--bs-primary-rgb), 0.2);
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 2rem;
+}
+
+.timeline-date {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.timeline-date:before {
+    content: '';
+    position: absolute;
+    left: -2.25rem;
+    top: 0.25rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(var(--bs-primary-rgb), 0.1);
+}
+
+.timeline-content {
+    padding-left: 1.5rem;
+}
+
+.timeline-event {
+    padding: 1rem;
+    border-left: 3px solid var(--primary-color);
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+    margin-bottom: 0.75rem;
+    border-radius: 0.375rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.timeline-event-time {
+    font-weight: 600;
+    margin-bottom: 0.375rem;
+    font-size: 0.875rem;
+}
+
+/* Form elementleri */
+.form-control, .form-select {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    border: 1px solid var(--bs-border-color);
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: rgba(var(--bs-primary-rgb), 0.5);
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* Tema önizleme kutuları */
+.theme-preview {
+    height: 120px;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 1px solid var(--bs-border-color);
+}
+
+.light-theme {
+    background-color: var(--bg-color-light);
+    color: var(--text-color-light);
+}
+
+.light-theme .card-header {
+    background-color: #F8F9FA;
+}
+
+.dark-theme {
+    background-color: var(--bg-color-dark);
+    color: var(--text-color-dark);
+}
+
+.dark-theme .card-header {
+    background-color: #222222;
+}
+
+.theme-preview-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 10px;
+}
+
+/* Animasyonlar */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.slide-in {
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(-20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.scale-in {
+    animation: scaleIn 0.3s ease-out;
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* Tablolar */
+.table {
+    margin-bottom: 0;
+    vertical-align: middle;
+}
+
+.table>:not(caption)>*>* {
+    padding: 0.75rem 1rem;
+}
+
+.table>thead {
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+}
+
+.table>thead>tr>th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05rem;
+    border-bottom-width: 1px;
+}
+
+.table-hover>tbody>tr:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.03);
+}
+
+/* Badge stilleri */
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+    border-radius: 0.375rem;
+}
+
+/* Giriş sayfası */
+.login-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: var(--bg-color-light);
+    background-image: url('../img/login-bg.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+.login-card {
+    max-width: 400px;
+    width: 100%;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+.login-card .card-body {
+    padding: 2.5rem;
+}
+
+.login-logo {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.login-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: var(--primary-color);
+}
+
+/* Responsive düzenlemeler */
+@media (max-width: 992px) {
+    .sidebar {
+        width: 220px;
+    }
+    
+    .content-wrapper {
+        margin-left: 220px;
+        width: calc(100% - 220px);
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        width: 240px;
+    }
+    
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    
+    .content-wrapper {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    .notification-dropdown {
+        min-width: 290px;
+    }
+}
+
+/* Özel scrollbar (webkit tarayıcıları için) */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #dee2e6;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #adb5bd;
+}
+
+[data-bs-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: #495057;
+}
+
+[data-bs-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: #6c757d;
+}
